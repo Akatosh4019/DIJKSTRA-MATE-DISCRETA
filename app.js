@@ -6,10 +6,12 @@ const btnModoSeleccionar = document.getElementById("btnModoSeleccionar");
 const btnAgregarArco = document.getElementById("btnAgregarArco");
 const btnCalcular = document.getElementById("btnCalcular");
 const btnLimpiar = document.getElementById("btnLimpiar");
+const btnEliminarNodo = document.getElementById("btnEliminarNodo");
 
 const txtOrigen = document.getElementById("txtOrigen");
 const txtDestino = document.getElementById("txtDestino");
 const txtPeso = document.getElementById("txtPeso");
+const txtEliminarNodo = document.getElementById("txtEliminarNodo");
 const cboInicial = document.getElementById("cboInicial");
 const tablaResultados = document.getElementById("tablaResultados");
 const tituloResultados = document.getElementById("tituloResultados");
@@ -119,6 +121,44 @@ function agregarNodo(posicion) {
     posicion
   });
 
+  ultimoResultado = null;
+  actualizarComboInicial();
+  limpiarTabla("Aun no hay resultados.");
+  limpiarVisualizaciones("Calcule Dijkstra para generar los graficos de caminos.");
+  dibujarGrafo();
+}
+
+function eliminarNodo() {
+  const idEliminar = Number(txtEliminarNodo.value);
+
+  if (!Number.isInteger(idEliminar)) {
+    mostrarMensaje("Ingrese el numero del nodo que desea eliminar.");
+    return;
+  }
+
+  if (!existeNodo(idEliminar)) {
+    mostrarMensaje("El nodo indicado no existe.");
+    return;
+  }
+
+  nodos = nodos.filter((nodo) => nodo.id !== idEliminar);
+  arcos = arcos.filter((arco) => arco.origen !== idEliminar && arco.destino !== idEliminar);
+
+  const mapaIds = new Map();
+  nodos
+    .sort((a, b) => a.id - b.id)
+    .forEach((nodo, indice) => {
+      const nuevoId = indice + 1;
+      mapaIds.set(nodo.id, nuevoId);
+      nodo.id = nuevoId;
+    });
+
+  arcos.forEach((arco) => {
+    arco.origen = mapaIds.get(arco.origen);
+    arco.destino = mapaIds.get(arco.destino);
+  });
+
+  txtEliminarNodo.value = "";
   ultimoResultado = null;
   actualizarComboInicial();
   limpiarTabla("Aun no hay resultados.");
@@ -743,6 +783,7 @@ btnModoSeleccionar.addEventListener("click", () => cambiarModo("seleccionar"));
 btnAgregarArco.addEventListener("click", agregarArco);
 btnCalcular.addEventListener("click", calcularDijkstra);
 btnLimpiar.addEventListener("click", limpiarTodo);
+btnEliminarNodo.addEventListener("click", eliminarNodo);
 window.addEventListener("resize", manejarRedimension);
 
 ajustarCanvas();
