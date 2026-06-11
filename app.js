@@ -24,6 +24,8 @@ const COLORES_CAMINOS = ["#f59e0b", "#10b981", "#8b5cf6", "#ef4444", "#06b6d4", 
 let nodos = [];
 let arcos = [];
 let modo = "seleccionar";
+let ultimoResultado = null;
+let temporizadorRedimension = null;
 
 function ajustarCanvas() {
   const rect = canvas.getBoundingClientRect();
@@ -117,6 +119,7 @@ function agregarNodo(posicion) {
     posicion
   });
 
+  ultimoResultado = null;
   actualizarComboInicial();
   limpiarTabla("Aun no hay resultados.");
   limpiarVisualizaciones("Calcule Dijkstra para generar los graficos de caminos.");
@@ -158,6 +161,7 @@ function agregarArco() {
   txtOrigen.value = "";
   txtDestino.value = "";
   txtPeso.value = "";
+  ultimoResultado = null;
   limpiarTabla("Aun no hay resultados.");
   limpiarVisualizaciones("Calcule Dijkstra para generar los graficos de caminos.");
   dibujarGrafo();
@@ -264,6 +268,10 @@ function calcularDijkstra() {
     tablaResultados.appendChild(fila);
   });
 
+  ultimoResultado = {
+    nodoInicial,
+    caminosCalculados
+  };
   crearVisualizaciones(nodoInicial, caminosCalculados);
   dibujarGrafo();
 }
@@ -276,6 +284,7 @@ function limpiarTodo() {
   txtPeso.value = "";
   cboInicial.innerHTML = "";
   tituloResultados.textContent = "Resultados";
+  ultimoResultado = null;
   limpiarTabla("Aun no hay resultados.");
   limpiarVisualizaciones("Calcule Dijkstra para generar los graficos de caminos.");
   cambiarModo("seleccionar");
@@ -718,12 +727,23 @@ canvas.addEventListener("click", (evento) => {
   agregarNodo(obtenerPosicionCanvas(evento));
 });
 
+function manejarRedimension() {
+  ajustarCanvas();
+
+  clearTimeout(temporizadorRedimension);
+  temporizadorRedimension = setTimeout(() => {
+    if (ultimoResultado) {
+      crearVisualizaciones(ultimoResultado.nodoInicial, ultimoResultado.caminosCalculados);
+    }
+  }, 120);
+}
+
 btnModoNodo.addEventListener("click", () => cambiarModo("agregarNodo"));
 btnModoSeleccionar.addEventListener("click", () => cambiarModo("seleccionar"));
 btnAgregarArco.addEventListener("click", agregarArco);
 btnCalcular.addEventListener("click", calcularDijkstra);
 btnLimpiar.addEventListener("click", limpiarTodo);
-window.addEventListener("resize", ajustarCanvas);
+window.addEventListener("resize", manejarRedimension);
 
 ajustarCanvas();
 cambiarModo("seleccionar");
