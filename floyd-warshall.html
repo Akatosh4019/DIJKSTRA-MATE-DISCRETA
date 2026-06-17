@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Floyd-Warshall - Roberto Samuel Valencia Saavedra</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-floyd">
+  <main class="app">
+    <section class="workspace">
+      <header class="topbar">
+        <div>
+          <p class="page-badge">Programacion dinamica</p>
+          <h1>Simulador Floyd-Warshall</h1>
+          <p>Autor: Roberto Samuel Valencia Saavedra</p>
+        </div>
+        <div class="top-actions">
+          <a class="nav-link" href="index.html">Inicio</a>
+          <a class="nav-link" href="dijkstra.html">Dijkstra</a>
+          <div class="mode-pill" id="modoActual">Modo: seleccionar</div>
+        </div>
+      </header>
+
+      <div class="canvas-shell">
+        <canvas id="canvasGrafo" width="900" height="620"></canvas>
+        <div class="hint" id="ayudaCanvas">Agrega nodos y arcos; Floyd-Warshall calculara todos los pares.</div>
+      </div>
+    </section>
+
+    <aside class="sidebar">
+      <section class="panel">
+        <h2>Herramientas</h2>
+        <button class="primary" id="btnModoNodo">Agregar Nodo</button>
+        <button id="btnModoSeleccionar">Seleccionar</button>
+
+        <label for="txtEliminarNodo">Nodo a eliminar</label>
+        <input id="txtEliminarNodo" type="number" min="1" placeholder="Ej: 3">
+        <button class="danger" id="btnEliminarNodo">Eliminar Nodo</button>
+      </section>
+
+      <section class="panel">
+        <h2>Agregar arco</h2>
+        <label for="txtOrigen">Nodo origen</label>
+        <input id="txtOrigen" type="number" min="1" placeholder="Ej: 1">
+
+        <label for="txtDestino">Nodo destino</label>
+        <input id="txtDestino" type="number" min="1" placeholder="Ej: 2">
+
+        <label for="txtPeso">Peso</label>
+        <input id="txtPeso" type="number" min="1" placeholder="Ej: 10">
+
+        <button class="primary" id="btnAgregarArco">Agregar Arco</button>
+      </section>
+
+      <section class="panel">
+        <h2>Floyd-Warshall</h2>
+        <p class="small-copy">No requiere nodo inicial: calcula caminos minimos entre todos los nodos.</p>
+        <button class="success" id="btnCalcular">Calcular Floyd-Warshall</button>
+        <button class="danger" id="btnLimpiar">Limpiar</button>
+      </section>
+
+      <section class="panel results-panel">
+        <h2 id="tituloResultados">Matriz de distancias</h2>
+        <div class="table-wrap">
+          <table id="tablaMatriz">
+            <tbody id="matrizResultados">
+              <tr>
+                <td class="empty">Aun no hay resultados.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <section class="method-section">
+    <div class="method-card">
+      <span>Metodo Floyd-Warshall</span>
+      <h2>Como funciona este calculo</h2>
+      <p>
+        Floyd-Warshall compara todos los pares de nodos y prueba si conviene pasar por un nodo intermedio.
+        Si la ruta origen -> intermedio -> destino es mas corta, reemplaza la distancia anterior y guarda
+        la informacion necesaria para reconstruir el camino.
+      </p>
+    </div>
+    <div class="method-steps">
+      <div>
+        <strong>1</strong>
+        <p>Construye una matriz de distancias inicial.</p>
+      </div>
+      <div>
+        <strong>2</strong>
+        <p>Prueba cada nodo como posible punto intermedio.</p>
+      </div>
+      <div>
+        <strong>3</strong>
+        <p>Genera la matriz final con caminos minimos entre todos los pares.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="visual-section">
+    <div class="visual-header">
+      <div>
+        <h2>Caminos entre todos los nodos</h2>
+        <p>Se muestran los caminos minimos encontrados para cada par alcanzable.</p>
+      </div>
+    </div>
+    <div id="contenedorVisualizaciones" class="visual-grid">
+      <div class="visual-empty">Calcule Floyd-Warshall para generar los caminos.</div>
+    </div>
+  </section>
+
+  <script src="app-floyd.js"></script>
+</body>
+</html>

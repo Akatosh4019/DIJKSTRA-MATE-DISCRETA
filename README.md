@@ -1,6 +1,8 @@
-# Simulador Dijkstra Web
+# Simulador de Caminos Mas Cortos
 
 Proyecto hecho con HTML, CSS y JavaScript para ejecutar desde Visual Studio Code o cualquier navegador.
+
+Autor: Roberto Samuel Valencia Saavedra
 
 ## Como ejecutar
 
@@ -20,15 +22,18 @@ Opcion con extension:
 
 ## Funcionamiento
 
-- Presione `Agregar Nodo` y haga clic en el area de dibujo.
+- La pagina principal muestra dos opciones: `Dijkstra` y `Floyd-Warshall`.
+- En cada simulador, presione `Agregar Nodo` y haga clic en el area de dibujo.
 - Escriba origen, destino y peso para agregar un arco dirigido.
-- Seleccione el nodo inicial.
-- Presione `Calcular Dijkstra`.
-- La tabla muestra distancia minima y camino mas corto.
-- Los arcos que forman caminos minimos se resaltan en color naranja.
+- En Dijkstra, seleccione el nodo inicial y presione `Calcular Dijkstra`.
+- En Floyd-Warshall, presione `Calcular Floyd-Warshall` para obtener la matriz de distancias entre todos los nodos.
+- Los resultados se muestran en tablas y tambien como graficos separados.
 
 ## Archivos
 
-- `index.html`: estructura de la interfaz.
+- `index.html`: pagina principal con botones hacia cada algoritmo.
+- `dijkstra.html`: simulador de Dijkstra.
+- `floyd-warshall.html`: simulador de Floyd-Warshall.
 - `style.css`: diseno visual de la aplicacion.
-- `app.js`: logica del grafo, dibujo en canvas y algoritmo de Dijkstra.
+- `app-dijkstra.js`: logica del grafo, dibujo en canvas y algoritmo de Dijkstra.
+- `app-floyd.js`: logica del grafo, dibujo en canvas y algoritmo de Floyd-Warshall.
