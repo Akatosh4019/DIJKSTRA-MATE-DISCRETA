@@ -22,12 +22,19 @@ const contenedorVisualizaciones = document.getElementById("contenedorVisualizaci
 const RADIO_NODO = 24;
 const INF = Number.POSITIVE_INFINITY;
 const COLORES_CAMINOS = ["#f59e0b", "#10b981", "#8b5cf6", "#ef4444", "#06b6d4", "#ec4899", "#84cc16"];
+const TIPO_GRAFO = new URLSearchParams(window.location.search).get("tipo") || "dirigido";
+const ES_DIRIGIDO = TIPO_GRAFO !== "no-dirigido";
 
 let nodos = [];
 let arcos = [];
 let modo = "seleccionar";
 let ultimoResultado = null;
 let temporizadorRedimension = null;
+
+const tipoGrafoBadge = document.getElementById("tipoGrafoBadge");
+tipoGrafoBadge.textContent = ES_DIRIGIDO
+  ? "Algoritmo voraz | Grafo dirigido"
+  : "Algoritmo voraz | Grafo no dirigido";
 
 function ajustarCanvas() {
   const rect = canvas.getBoundingClientRect();
@@ -45,7 +52,9 @@ function cambiarModo(nuevoModo) {
   modoActual.textContent = agregando ? "Modo: agregar nodo" : "Modo: seleccionar";
   ayudaCanvas.textContent = agregando
     ? "Haz clic en el area blanca para colocar un nuevo nodo."
-    : "Escribe origen, destino y peso para agregar arcos dirigidos.";
+    : ES_DIRIGIDO
+      ? "Escribe origen, destino y peso para agregar aristas dirigidas."
+      : "Escribe los dos nodos y un peso para agregar una arista no dirigida.";
 }
 
 function mostrarMensaje(mensaje) {
@@ -191,7 +200,16 @@ function agregarArco() {
     return;
   }
 
-  const arcoExistente = arcos.find((arco) => arco.origen === origen && arco.destino === destino);
+  const arcoExistente = arcos.find((arco) => {
+    if (ES_DIRIGIDO) {
+      return arco.origen === origen && arco.destino === destino;
+    }
+
+    return (
+      (arco.origen === origen && arco.destino === destino) ||
+      (arco.origen === destino && arco.destino === origen)
+    );
+  });
   if (arcoExistente) {
     arcoExistente.peso = peso;
   } else {
@@ -234,20 +252,32 @@ function dijkstra(nodoInicial) {
 
     visitados.add(actual);
 
-    arcos
-      .filter((arco) => arco.origen === actual)
-      .forEach((arco) => {
-        if (visitados.has(arco.destino)) return;
+    obtenerVecinos(actual).forEach((vecino) => {
+      if (visitados.has(vecino.destino)) return;
 
-        const nuevaDistancia = distancias[actual] + arco.peso;
-        if (nuevaDistancia < distancias[arco.destino]) {
-          distancias[arco.destino] = nuevaDistancia;
-          anteriores[arco.destino] = actual;
-        }
-      });
+      const nuevaDistancia = distancias[actual] + vecino.peso;
+      if (nuevaDistancia < distancias[vecino.destino]) {
+        distancias[vecino.destino] = nuevaDistancia;
+        anteriores[vecino.destino] = actual;
+      }
+    });
   }
 
   return { distancias, anteriores };
+}
+
+function obtenerVecinos(nodoId) {
+  const vecinos = [];
+
+  arcos.forEach((arco) => {
+    if (arco.origen === nodoId) {
+      vecinos.push({ destino: arco.destino, peso: arco.peso });
+    } else if (!ES_DIRIGIDO && arco.destino === nodoId) {
+      vecinos.push({ destino: arco.origen, peso: arco.peso });
+    }
+  });
+
+  return vecinos;
 }
 
 function reconstruirCamino(nodoInicial, destino, anteriores) {
@@ -390,9 +420,14 @@ function crearVisualizaciones(nodoInicial, caminosCalculados) {
 function obtenerArcosDelCamino(camino) {
   const claves = [];
   for (let i = 0; i < camino.length - 1; i++) {
-    claves.push(`${camino[i]}-${camino[i + 1]}`);
+    claves.push(claveArco(camino[i], camino[i + 1]));
   }
   return claves;
+}
+
+function claveArco(origen, destino) {
+  if (ES_DIRIGIDO) return `${origen}-${destino}`;
+  return origen < destino ? `${origen}-${destino}` : `${destino}-${origen}`;
 }
 
 function crearTarjetaVisual(titulo, subtitulo, general) {
@@ -436,7 +471,7 @@ function dibujarArco(arco) {
 
   const inicio = puntoEnBorde(nodoOrigen.posicion, nodoDestino.posicion);
   const fin = puntoEnBorde(nodoDestino.posicion, nodoOrigen.posicion);
-  const tieneArcoOpuesto = arcos.some(
+  const tieneArcoOpuesto = ES_DIRIGIDO && arcos.some(
     (otro) => otro.origen === arco.destino && otro.destino === arco.origen
   );
   const control = obtenerPuntoControl(inicio, fin, tieneArcoOpuesto ? 42 : 0);
@@ -455,7 +490,9 @@ function dibujarArco(arco) {
   }
   ctx.stroke();
 
-  dibujarFlecha(inicio, fin, false, tieneArcoOpuesto ? control : null);
+  if (ES_DIRIGIDO) {
+    dibujarFlecha(inicio, fin, false, tieneArcoOpuesto ? control : null);
+  }
   dibujarPeso(arco.peso, inicio, fin, tieneArcoOpuesto ? control : null);
   ctx.restore();
 }
@@ -573,7 +610,7 @@ function dibujarMiniGrafo(canvasVisual, opciones) {
   const posiciones = calcularPosicionesMini(rect.width, rect.height);
 
   arcos.forEach((arco) => {
-    const clave = `${arco.origen}-${arco.destino}`;
+    const clave = claveArco(arco.origen, arco.destino);
     const colorGeneral = opciones.coloresPorArco?.get(clave);
     const resaltadoIndividual = opciones.arcosResaltados?.has(clave);
     const estaResaltado = Boolean(colorGeneral || resaltadoIndividual);
@@ -633,7 +670,7 @@ function dibujarMiniArco(contexto, posiciones, arco, estilo) {
 
   const inicio = puntoEnBordeMini(origen, destino);
   const fin = puntoEnBordeMini(destino, origen);
-  const tieneArcoOpuesto = arcos.some(
+  const tieneArcoOpuesto = ES_DIRIGIDO && arcos.some(
     (otro) => otro.origen === arco.destino && otro.destino === arco.origen
   );
   const control = obtenerPuntoControlMini(inicio, fin, tieneArcoOpuesto ? 34 : 0);
@@ -654,7 +691,9 @@ function dibujarMiniArco(contexto, posiciones, arco, estilo) {
   }
   contexto.stroke();
 
-  dibujarFlechaMini(contexto, inicio, fin, tieneArcoOpuesto ? control : null, estilo.grosor);
+  if (ES_DIRIGIDO) {
+    dibujarFlechaMini(contexto, inicio, fin, tieneArcoOpuesto ? control : null, estilo.grosor);
+  }
 
   if (estilo.opacidad > 0.8) {
     dibujarPesoMini(contexto, arco.peso, inicio, fin, tieneArcoOpuesto ? control : null);

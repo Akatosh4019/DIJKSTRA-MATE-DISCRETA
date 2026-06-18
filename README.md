@@ -23,10 +23,13 @@ Opcion con extension:
 ## Funcionamiento
 
 - La pagina principal muestra dos opciones: `Dijkstra` y `Floyd-Warshall`.
+- Antes de entrar, permite elegir entre aristas `Dirigidas` y `No dirigidas`.
 - En cada simulador, presione `Agregar Nodo` y haga clic en el area de dibujo.
-- Escriba origen, destino y peso para agregar un arco dirigido.
+- Escriba origen, destino y peso para agregar una arista.
+- En modo no dirigido, una conexion funciona en ambos sentidos y solo puede tener un peso.
 - En Dijkstra, seleccione el nodo inicial y presione `Calcular Dijkstra`.
 - En Floyd-Warshall, presione `Calcular Floyd-Warshall` para obtener la matriz de distancias entre todos los nodos.
+- Floyd-Warshall muestra una matriz inicial y una matriz final, resaltando las celdas que mejoraron al usar nodos intermedios.
 - Los resultados se muestran en tablas y tambien como graficos separados.
 
 ## Archivos

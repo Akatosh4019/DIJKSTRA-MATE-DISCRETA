@@ -11,7 +11,7 @@
     <section class="workspace">
       <header class="topbar">
         <div>
-          <p class="page-badge">Programacion dinamica</p>
+          <p class="page-badge" id="tipoGrafoBadge">Programacion dinamica</p>
           <h1>Simulador Floyd-Warshall</h1>
           <p>Autor: Roberto Samuel Valencia Saavedra</p>
         </div>
@@ -40,7 +40,7 @@
       </section>
 
       <section class="panel">
-        <h2>Agregar arco</h2>
+        <h2>Agregar arista</h2>
         <label for="txtOrigen">Nodo origen</label>
         <input id="txtOrigen" type="number" min="1" placeholder="Ej: 1">
 
@@ -50,7 +50,7 @@
         <label for="txtPeso">Peso</label>
         <input id="txtPeso" type="number" min="1" placeholder="Ej: 10">
 
-        <button class="primary" id="btnAgregarArco">Agregar Arco</button>
+        <button class="primary" id="btnAgregarArco">Agregar Arista</button>
       </section>
 
       <section class="panel">
@@ -60,18 +60,6 @@
         <button class="danger" id="btnLimpiar">Limpiar</button>
       </section>
 
-      <section class="panel results-panel">
-        <h2 id="tituloResultados">Matriz de distancias</h2>
-        <div class="table-wrap">
-          <table id="tablaMatriz">
-            <tbody id="matrizResultados">
-              <tr>
-                <td class="empty">Aun no hay resultados.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
     </aside>
   </main>
 
@@ -97,6 +85,28 @@
       <div>
         <strong>3</strong>
         <p>Genera la matriz final con caminos minimos entre todos los pares.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="matrix-section">
+    <header class="matrix-header">
+      <div>
+        <span>Resultado principal</span>
+        <h2>Las matrices de Floyd-Warshall</h2>
+        <p>Compara el estado inicial del grafo con las distancias minimas calculadas.</p>
+      </div>
+      <div class="matrix-legend">
+        <span><i class="legend-direct"></i> Valor directo</span>
+        <span><i class="legend-improved"></i> Distancia mejorada</span>
+        <span><i class="legend-unreachable"></i> No alcanzable</span>
+      </div>
+    </header>
+
+    <div id="matricesResultado" class="matrix-showcase">
+      <div class="matrix-empty">
+        <strong>La respuesta de Floyd-Warshall aparecera aqui</strong>
+        <p>Agrega el grafo y pulsa “Calcular Floyd-Warshall” para comparar ambas matrices.</p>
       </div>
     </div>
   </section>

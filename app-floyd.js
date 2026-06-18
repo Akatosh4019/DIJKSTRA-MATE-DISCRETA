@@ -12,21 +12,27 @@ const txtOrigen = document.getElementById("txtOrigen");
 const txtDestino = document.getElementById("txtDestino");
 const txtPeso = document.getElementById("txtPeso");
 const txtEliminarNodo = document.getElementById("txtEliminarNodo");
-const matrizResultados = document.getElementById("matrizResultados");
-const tituloResultados = document.getElementById("tituloResultados");
 const modoActual = document.getElementById("modoActual");
 const ayudaCanvas = document.getElementById("ayudaCanvas");
 const contenedorVisualizaciones = document.getElementById("contenedorVisualizaciones");
+const matricesResultado = document.getElementById("matricesResultado");
 
 const RADIO_NODO = 24;
 const INF = Number.POSITIVE_INFINITY;
 const COLORES_CAMINOS = ["#f59e0b", "#10b981", "#8b5cf6", "#ef4444", "#06b6d4", "#ec4899", "#84cc16"];
+const TIPO_GRAFO = new URLSearchParams(window.location.search).get("tipo") || "dirigido";
+const ES_DIRIGIDO = TIPO_GRAFO !== "no-dirigido";
 
 let nodos = [];
 let arcos = [];
 let modo = "seleccionar";
 let ultimoResultado = null;
 let temporizadorRedimension = null;
+
+const tipoGrafoBadge = document.getElementById("tipoGrafoBadge");
+tipoGrafoBadge.textContent = ES_DIRIGIDO
+  ? "Programacion dinamica | Grafo dirigido"
+  : "Programacion dinamica | Grafo no dirigido";
 
 function ajustarCanvas() {
   const rect = canvas.getBoundingClientRect();
@@ -44,7 +50,9 @@ function cambiarModo(nuevoModo) {
   modoActual.textContent = agregando ? "Modo: agregar nodo" : "Modo: seleccionar";
   ayudaCanvas.textContent = agregando
     ? "Haz clic en el area blanca para colocar un nuevo nodo."
-    : "Agrega arcos y calcula Floyd-Warshall para obtener todos los caminos.";
+    : ES_DIRIGIDO
+      ? "Agrega aristas dirigidas y calcula Floyd-Warshall."
+      : "Agrega aristas no dirigidas y calcula Floyd-Warshall.";
 }
 
 function mostrarMensaje(mensaje) {
@@ -80,8 +88,12 @@ function buscarNodo(id) {
 
 function invalidarResultados() {
   ultimoResultado = null;
-  tituloResultados.textContent = "Matriz de distancias";
-  matrizResultados.innerHTML = `<tr><td class="empty">Aun no hay resultados.</td></tr>`;
+  matricesResultado.innerHTML = `
+    <div class="matrix-empty">
+      <strong>La respuesta de Floyd-Warshall aparecera aqui</strong>
+      <p>Agrega el grafo y pulsa “Calcular Floyd-Warshall” para comparar ambas matrices.</p>
+    </div>
+  `;
   contenedorVisualizaciones.innerHTML = `<div class="visual-empty">Calcule Floyd-Warshall para generar los caminos.</div>`;
 }
 
@@ -174,7 +186,16 @@ function agregarArco() {
     return;
   }
 
-  const arcoExistente = arcos.find((arco) => arco.origen === origen && arco.destino === destino);
+  const arcoExistente = arcos.find((arco) => {
+    if (ES_DIRIGIDO) {
+      return arco.origen === origen && arco.destino === destino;
+    }
+
+    return (
+      (arco.origen === origen && arco.destino === destino) ||
+      (arco.origen === destino && arco.destino === origen)
+    );
+  });
   if (arcoExistente) {
     arcoExistente.peso = peso;
   } else {
@@ -205,7 +226,14 @@ function floydWarshall() {
       dist[i][j] = arco.peso;
       siguiente[i][j] = j;
     }
+
+    if (!ES_DIRIGIDO && arco.peso < dist[j][i]) {
+      dist[j][i] = arco.peso;
+      siguiente[j][i] = i;
+    }
   });
+
+  const inicial = dist.map((fila) => [...fila]);
 
   for (let k = 0; k < n; k++) {
     for (let i = 0; i < n; i++) {
@@ -219,7 +247,7 @@ function floydWarshall() {
     }
   }
 
-  return { dist, siguiente };
+  return { inicial, dist, siguiente };
 }
 
 function reconstruirCamino(origen, destino, siguiente) {
@@ -258,14 +286,50 @@ function calcularFloydWarshall() {
     }
   }
 
-  tituloResultados.textContent = "Matriz de distancias minimas";
-  mostrarMatriz(resultado.dist);
+  mostrarMatrices(resultado.inicial, resultado.dist, resultado.siguiente);
   crearVisualizaciones(caminos);
-  ultimoResultado = { caminos };
+  ultimoResultado = {
+    caminos,
+    inicial: resultado.inicial,
+    final: resultado.dist,
+    siguiente: resultado.siguiente
+  };
 }
 
-function mostrarMatriz(dist) {
-  let html = "<thead><tr><th>Desde/Hacia</th>";
+function mostrarMatrices(inicial, final, siguiente) {
+  const cambios = contarMejoras(inicial, final);
+
+  matricesResultado.innerHTML = `
+    <article class="matrix-card initial-matrix">
+      <div class="matrix-card-header">
+        <div>
+          <span>Antes del algoritmo</span>
+          <h3>Matriz inicial</h3>
+        </div>
+        <strong>Pesos directos</strong>
+      </div>
+      <div class="matrix-scroll">
+        ${crearTablaMatriz(inicial, inicial, null)}
+      </div>
+    </article>
+
+    <article class="matrix-card final-matrix">
+      <div class="matrix-card-header">
+        <div>
+          <span>Respuesta final</span>
+          <h3>Matriz de distancias minimas</h3>
+        </div>
+        <strong>${cambios} ${cambios === 1 ? "celda mejorada" : "celdas mejoradas"}</strong>
+      </div>
+      <div class="matrix-scroll">
+        ${crearTablaMatriz(final, inicial, siguiente)}
+      </div>
+    </article>
+  `;
+}
+
+function crearTablaMatriz(matriz, inicial, siguiente) {
+  let html = '<table class="floyd-matrix"><thead><tr><th>Desde / Hacia</th>';
   nodos.forEach((nodo) => {
     html += `<th>${nodo.id}</th>`;
   });
@@ -274,13 +338,45 @@ function mostrarMatriz(dist) {
   nodos.forEach((nodoOrigen, i) => {
     html += `<tr><th>${nodoOrigen.id}</th>`;
     nodos.forEach((_, j) => {
-      html += `<td>${dist[i][j] === INF ? "No alcanzable" : dist[i][j]}</td>`;
+      const valor = matriz[i][j];
+      const mejorada = siguiente && valor < inicial[i][j];
+      const noAlcanzable = valor === INF;
+      const clases = [
+        i === j ? "matrix-diagonal" : "",
+        mejorada ? "matrix-improved" : "",
+        noAlcanzable ? "matrix-infinite" : ""
+      ].filter(Boolean).join(" ");
+
+      let detalle = "";
+      if (mejorada) {
+        const camino = reconstruirCamino(i + 1, j + 1, siguiente);
+        detalle = `<small>${inicial[i][j] === INF ? "∞" : inicial[i][j]} → ${valor}<br>${camino.join(" → ")}</small>`;
+      }
+
+      html += `
+        <td class="${clases}">
+          <strong>${noAlcanzable ? "∞" : valor}</strong>
+          ${detalle}
+        </td>
+      `;
     });
     html += "</tr>";
   });
 
   html += "</tbody>";
-  document.getElementById("tablaMatriz").innerHTML = html;
+  return html;
+}
+
+function contarMejoras(inicial, final) {
+  let total = 0;
+
+  for (let i = 0; i < inicial.length; i++) {
+    for (let j = 0; j < inicial.length; j++) {
+      if (final[i][j] < inicial[i][j]) total++;
+    }
+  }
+
+  return total;
 }
 
 function limpiarTodo() {
@@ -338,9 +434,14 @@ function crearVisualizaciones(caminos) {
 function obtenerArcosDelCamino(camino) {
   const claves = [];
   for (let i = 0; i < camino.length - 1; i++) {
-    claves.push(`${camino[i]}-${camino[i + 1]}`);
+    claves.push(claveArco(camino[i], camino[i + 1]));
   }
   return claves;
+}
+
+function claveArco(origen, destino) {
+  if (ES_DIRIGIDO) return `${origen}-${destino}`;
+  return origen < destino ? `${origen}-${destino}` : `${destino}-${origen}`;
 }
 
 function crearTarjetaVisual(titulo, subtitulo, general) {
@@ -402,7 +503,9 @@ function dibujarArco(contexto, arco, color, grosor, mostrarPeso) {
 
   const inicio = puntoEnBorde(nodoOrigen.posicion, nodoDestino.posicion);
   const fin = puntoEnBorde(nodoDestino.posicion, nodoOrigen.posicion);
-  const tieneArcoOpuesto = arcos.some((otro) => otro.origen === arco.destino && otro.destino === arco.origen);
+  const tieneArcoOpuesto = ES_DIRIGIDO && arcos.some(
+    (otro) => otro.origen === arco.destino && otro.destino === arco.origen
+  );
   const control = obtenerPuntoControl(inicio, fin, tieneArcoOpuesto ? 42 : 0);
 
   contexto.save();
@@ -416,7 +519,9 @@ function dibujarArco(contexto, arco, color, grosor, mostrarPeso) {
   else contexto.lineTo(fin.x, fin.y);
   contexto.stroke();
 
-  dibujarFlecha(contexto, inicio, fin, tieneArcoOpuesto ? control : null, grosor);
+  if (ES_DIRIGIDO) {
+    dibujarFlecha(contexto, inicio, fin, tieneArcoOpuesto ? control : null, grosor);
+  }
   if (mostrarPeso) dibujarPeso(contexto, arco.peso, inicio, fin, tieneArcoOpuesto ? control : null);
   contexto.restore();
 }
@@ -492,7 +597,7 @@ function dibujarMiniGrafo(canvasVisual, opciones) {
   const posiciones = calcularPosicionesMini(rect.width, rect.height);
 
   arcos.forEach((arco) => {
-    const clave = `${arco.origen}-${arco.destino}`;
+    const clave = claveArco(arco.origen, arco.destino);
     const colorGeneral = opciones.coloresPorArco?.get(clave);
     const resaltadoIndividual = opciones.arcosResaltados?.has(clave);
     const resaltado = Boolean(colorGeneral || resaltadoIndividual);
@@ -538,7 +643,9 @@ function dibujarMiniArco(contexto, posiciones, arco, color, grosor, mostrarPeso)
 
   const inicio = puntoEnBorde(origen, destino, 20);
   const fin = puntoEnBorde(destino, origen, 20);
-  const tieneArcoOpuesto = arcos.some((otro) => otro.origen === arco.destino && otro.destino === arco.origen);
+  const tieneArcoOpuesto = ES_DIRIGIDO && arcos.some(
+    (otro) => otro.origen === arco.destino && otro.destino === arco.origen
+  );
   const control = obtenerPuntoControl(inicio, fin, tieneArcoOpuesto ? 34 : 0);
 
   contexto.save();
@@ -551,7 +658,9 @@ function dibujarMiniArco(contexto, posiciones, arco, color, grosor, mostrarPeso)
   if (tieneArcoOpuesto) contexto.quadraticCurveTo(control.x, control.y, fin.x, fin.y);
   else contexto.lineTo(fin.x, fin.y);
   contexto.stroke();
-  dibujarFlecha(contexto, inicio, fin, tieneArcoOpuesto ? control : null, grosor);
+  if (ES_DIRIGIDO) {
+    dibujarFlecha(contexto, inicio, fin, tieneArcoOpuesto ? control : null, grosor);
+  }
   if (mostrarPeso) dibujarPeso(contexto, arco.peso, inicio, fin, tieneArcoOpuesto ? control : null);
   contexto.restore();
 }
@@ -564,7 +673,10 @@ function manejarRedimension() {
   ajustarCanvas();
   clearTimeout(temporizadorRedimension);
   temporizadorRedimension = setTimeout(() => {
-    if (ultimoResultado) crearVisualizaciones(ultimoResultado.caminos);
+    if (ultimoResultado) {
+      mostrarMatrices(ultimoResultado.inicial, ultimoResultado.final, ultimoResultado.siguiente);
+      crearVisualizaciones(ultimoResultado.caminos);
+    }
   }, 120);
 }
 

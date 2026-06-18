@@ -19,14 +19,14 @@
     </section>
 
     <section class="algorithm-grid" aria-label="Algoritmos disponibles">
-      <a class="algorithm-card dijkstra-card" href="dijkstra.html">
+      <a class="algorithm-card dijkstra-card" href="dijkstra.html" data-algoritmo="dijkstra">
         <span class="card-kicker">Desde un origen</span>
         <h2>Dijkstra</h2>
         <p>Calcula la distancia minima desde un nodo inicial hacia todos los demas nodos.</p>
         <strong>Entrar al simulador</strong>
       </a>
 
-      <a class="algorithm-card floyd-card" href="floyd-warshall.html">
+      <a class="algorithm-card floyd-card" href="floyd-warshall.html" data-algoritmo="floyd-warshall">
         <span class="card-kicker">Todos contra todos</span>
         <h2>Floyd-Warshall</h2>
         <p>Calcula las distancias minimas entre todos los pares de nodos del grafo.</p>
@@ -34,5 +34,30 @@
       </a>
     </section>
   </main>
+
+  <div class="choice-overlay" id="selectorAristas" hidden>
+    <section class="choice-dialog" role="dialog" aria-modal="true" aria-labelledby="tituloSelector">
+      <button class="choice-close" id="cerrarSelector" type="button" aria-label="Cerrar">&times;</button>
+      <p class="choice-kicker">Antes de comenzar</p>
+      <h2 id="tituloSelector">Elige el tipo de aristas</h2>
+      <p class="choice-copy">Esta eleccion cambia como se interpretan y dibujan las conexiones.</p>
+
+      <div class="choice-grid">
+        <button class="choice-option directed-option" type="button" data-tipo="dirigido">
+          <span class="choice-symbol">A &rarr; B</span>
+          <strong>Dirigidas</strong>
+          <small>Cada sentido puede tener un peso diferente.</small>
+        </button>
+
+        <button class="choice-option undirected-option" type="button" data-tipo="no-dirigido">
+          <span class="choice-symbol">A &mdash; B</span>
+          <strong>No dirigidas</strong>
+          <small>La conexion funciona igual en ambos sentidos y tiene un solo peso.</small>
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <script src="app-home.js"></script>
 </body>
 </html>

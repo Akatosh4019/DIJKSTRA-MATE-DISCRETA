@@ -11,7 +11,7 @@
     <section class="workspace">
       <header class="topbar">
         <div>
-          <p class="page-badge">Algoritmo voraz</p>
+          <p class="page-badge" id="tipoGrafoBadge">Algoritmo voraz</p>
           <h1>Simulador Dijkstra</h1>
           <p>Autor: Roberto Samuel Valencia Saavedra</p>
         </div>
@@ -40,7 +40,7 @@
       </section>
 
       <section class="panel">
-        <h2>Agregar arco</h2>
+        <h2>Agregar arista</h2>
         <label for="txtOrigen">Nodo origen</label>
         <input id="txtOrigen" type="number" min="1" placeholder="Ej: 1">
 
@@ -50,7 +50,7 @@
         <label for="txtPeso">Peso</label>
         <input id="txtPeso" type="number" min="1" placeholder="Ej: 10">
 
-        <button class="primary" id="btnAgregarArco">Agregar Arco</button>
+        <button class="primary" id="btnAgregarArco">Agregar Arista</button>
       </section>
 
       <section class="panel">
@@ -89,7 +89,7 @@
       <h2>Como funciona este calculo</h2>
       <p>
         Dijkstra parte desde el nodo inicial elegido con distancia 0. Luego busca el nodo no visitado
-        con menor distancia acumulada, revisa los arcos que salen de ese nodo y actualiza las distancias
+        con menor distancia acumulada, revisa las aristas conectadas con ese nodo y actualiza las distancias
         si encuentra un camino mas corto.
       </p>
     </div>
