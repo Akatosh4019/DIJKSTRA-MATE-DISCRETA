@@ -22,10 +22,10 @@ Opcion con extension:
 
 ## Funcionamiento
 
-- La pagina principal muestra dos opciones: `Dijkstra` y `Floyd-Warshall`.
-- Tambien incluye un comparador que genera el mismo grafo aleatorio para ambos algoritmos.
-- El comparador elige un nodo inicial: Dijkstra calcula solo desde ese origen y Floyd-Warshall calcula toda la matriz.
-- Luego verifica que la fila correspondiente de Floyd coincida con Dijkstra y compara sus tiempos.
+- La pagina principal muestra tres opciones: `Dijkstra`, `Floyd-Warshall` y `Analizar mi grafo`.
+- Tambien incluye un analizador donde el usuario dibuja su propio grafo.
+- El analizador detecta tamaño, densidad y objetivo; mide Dijkstra y Floyd-Warshall sobre el mismo grafo.
+- Finalmente recomienda el algoritmo mas conveniente y explica el motivo.
 - Antes de entrar, permite elegir entre aristas `Dirigidas` y `No dirigidas`.
 - En cada simulador, presione `Agregar Nodo` y haga clic en el area de dibujo.
 - Escriba origen, destino y peso para agregar una arista.
@@ -40,6 +40,8 @@ Opcion con extension:
 - `index.html`: pagina principal con botones hacia cada algoritmo.
 - `dijkstra.html`: simulador de Dijkstra.
 - `floyd-warshall.html`: simulador de Floyd-Warshall.
+- `analizador.html`: editor y recomendador automatico de algoritmos.
 - `style.css`: diseno visual de la aplicacion.
 - `app-dijkstra.js`: logica del grafo, dibujo en canvas y algoritmo de Dijkstra.
 - `app-floyd.js`: logica del grafo, dibujo en canvas y algoritmo de Floyd-Warshall.
+- `app-analizador.js`: analisis del grafo, mediciones y recomendacion automatica.
