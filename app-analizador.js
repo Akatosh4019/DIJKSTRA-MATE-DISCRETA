@@ -313,6 +313,7 @@ function decidirAlgoritmo(datos) {
 function mostrarAnalisis(datos) {
   const ganadorUno = datos.dijkstraUno.mediana <= datos.floyd.mediana ? "Dijkstra" : "Floyd-Warshall";
   const porcentaje = (datos.densidad * 100).toFixed(1);
+  const medicionOrientativa = datos.n < 20;
 
   resultadoAnalisis.innerHTML = `
     <header class="analyzer-result-header">
@@ -357,6 +358,21 @@ function mostrarAnalisis(datos) {
         y Floyd-Warshall (${formatearTiempo(datos.floyd.mediana)}).
       </p>
     </div>
+
+    ${medicionOrientativa ? `
+      <div class="analysis-warning">
+        <strong>Medicion orientativa</strong>
+        <p>
+          Este grafo tiene ${datos.n} nodos. Para comparar rendimiento con mayor claridad,
+          realiza otra prueba con al menos 20 nodos y varias conexiones por nodo.
+        </p>
+      </div>
+    ` : `
+      <div class="analysis-reliable">
+        <strong>Configuracion adecuada para comparar</strong>
+        <p>El grafo tiene suficientes nodos para observar mejor la diferencia de tiempos.</p>
+      </div>
+    `}
 
     <div class="analyzer-action">
       <button id="btnCalcularRecomendado">

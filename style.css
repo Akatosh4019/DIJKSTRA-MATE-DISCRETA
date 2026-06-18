@@ -961,6 +961,51 @@ body {
   line-height: 1.55;
 }
 
+.analysis-advice {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  color: #78350f;
+  background: #fffbeb;
+}
+
+.analysis-advice strong {
+  display: block;
+  font-size: 13px;
+}
+
+.analysis-advice p {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.analysis-warning,
+.analysis-reliable {
+  margin-top: 14px;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.analysis-warning {
+  color: #78350f;
+  border: 1px solid #fcd34d;
+  background: #fffbeb;
+}
+
+.analysis-reliable {
+  color: #14532d;
+  border: 1px solid #86efac;
+  background: #f0fdf4;
+}
+
+.analysis-warning p,
+.analysis-reliable p {
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
 .analyzer-action {
   display: flex;
   justify-content: center;
