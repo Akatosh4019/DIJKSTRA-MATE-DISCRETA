@@ -57,7 +57,9 @@
         <h2>Dijkstra</h2>
         <label for="cboInicial">Nodo inicial</label>
         <select id="cboInicial"></select>
+        <button class="random-button" id="btnConectarAleatorio">Conectar Todos Aleatoriamente</button>
         <button class="success" id="btnCalcular">Calcular Dijkstra</button>
+        <div class="performance-result" id="tiempoRespuesta">Tiempo de respuesta: --</div>
         <button class="danger" id="btnLimpiar">Limpiar</button>
       </section>
 
@@ -120,6 +122,14 @@
       <div class="visual-empty">Calcule Dijkstra para generar los graficos de caminos.</div>
     </div>
   </section>
+
+  <div class="loading-overlay" id="pantallaCarga" hidden>
+    <div class="loading-box">
+      <div class="loading-spinner"></div>
+      <strong id="textoCarga">Calculando Dijkstra...</strong>
+      <p>Procesando el grafo y preparando los resultados.</p>
+    </div>
+  </div>
 
   <script src="app-dijkstra.js"></script>
 </body>

@@ -7,6 +7,7 @@ const btnAgregarArco = document.getElementById("btnAgregarArco");
 const btnCalcular = document.getElementById("btnCalcular");
 const btnLimpiar = document.getElementById("btnLimpiar");
 const btnEliminarNodo = document.getElementById("btnEliminarNodo");
+const btnConectarAleatorio = document.getElementById("btnConectarAleatorio");
 
 const txtOrigen = document.getElementById("txtOrigen");
 const txtDestino = document.getElementById("txtDestino");
@@ -16,6 +17,9 @@ const modoActual = document.getElementById("modoActual");
 const ayudaCanvas = document.getElementById("ayudaCanvas");
 const contenedorVisualizaciones = document.getElementById("contenedorVisualizaciones");
 const matricesResultado = document.getElementById("matricesResultado");
+const pantallaCarga = document.getElementById("pantallaCarga");
+const textoCarga = document.getElementById("textoCarga");
+const tiempoRespuesta = document.getElementById("tiempoRespuesta");
 
 const RADIO_NODO = 24;
 const INF = Number.POSITIVE_INFINITY;
@@ -88,6 +92,8 @@ function buscarNodo(id) {
 
 function invalidarResultados() {
   ultimoResultado = null;
+  tiempoRespuesta.textContent = "Tiempo de respuesta: --";
+  tiempoRespuesta.classList.remove("ready");
   matricesResultado.innerHTML = `
     <div class="matrix-empty">
       <strong>La respuesta de Floyd-Warshall aparecera aqui</strong>
@@ -209,6 +215,49 @@ function agregarArco() {
   dibujarGrafo();
 }
 
+function conectarTodosAleatoriamente() {
+  if (nodos.length === 0) {
+    mostrarMensaje("No se puede conectar: no hay nodos en la pizarra.");
+    return;
+  }
+
+  if (nodos.length < 2) {
+    mostrarMensaje("Se necesitan al menos dos nodos para crear conexiones.");
+    return;
+  }
+
+  const cantidad = ES_DIRIGIDO
+    ? nodos.length * (nodos.length - 1)
+    : (nodos.length * (nodos.length - 1)) / 2;
+  const tipoTexto = ES_DIRIGIDO ? "dirigidas" : "no dirigidas";
+  const confirmado = window.confirm(
+    `¿Seguro que quieres conectar todos los nodos?\n\n` +
+    `Se reemplazaran las conexiones actuales por ${cantidad} aristas ${tipoTexto} ` +
+    `con pesos aleatorios entre 1 y 99.`
+  );
+
+  if (!confirmado) return;
+
+  arcos = [];
+
+  for (let i = 0; i < nodos.length; i++) {
+    for (let j = 0; j < nodos.length; j++) {
+      if (i === j) continue;
+      if (!ES_DIRIGIDO && j <= i) continue;
+
+      arcos.push({
+        origen: nodos[i].id,
+        destino: nodos[j].id,
+        peso: Math.floor(Math.random() * 99) + 1
+      });
+    }
+  }
+
+  invalidarResultados();
+  dibujarGrafo();
+  mostrarMensaje(`Se generaron ${arcos.length} aristas aleatorias.`);
+}
+
 function floydWarshall() {
   const n = nodos.length;
   const dist = Array.from({ length: n }, () => Array(n).fill(INF));
@@ -265,35 +314,68 @@ function reconstruirCamino(origen, destino, siguiente) {
   return camino;
 }
 
-function calcularFloydWarshall() {
+async function calcularFloydWarshall() {
   if (nodos.length === 0) {
     mostrarMensaje("Agregue al menos un nodo.");
     return;
   }
 
-  const resultado = floydWarshall();
-  const caminos = [];
+  mostrarPantallaCarga("Calculando Floyd-Warshall...");
+  await permitirRenderizado();
+  const inicio = performance.now();
 
-  for (let i = 1; i <= nodos.length; i++) {
-    for (let j = 1; j <= nodos.length; j++) {
-      const camino = reconstruirCamino(i, j, resultado.siguiente);
-      caminos.push({
-        origen: i,
-        destino: j,
-        distancia: resultado.dist[i - 1][j - 1],
-        camino
-      });
+  try {
+    const resultado = floydWarshall();
+    const caminos = [];
+
+    for (let i = 1; i <= nodos.length; i++) {
+      for (let j = 1; j <= nodos.length; j++) {
+        const camino = reconstruirCamino(i, j, resultado.siguiente);
+        caminos.push({
+          origen: i,
+          destino: j,
+          distancia: resultado.dist[i - 1][j - 1],
+          camino
+        });
+      }
     }
-  }
 
-  mostrarMatrices(resultado.inicial, resultado.dist, resultado.siguiente);
-  crearVisualizaciones(caminos);
-  ultimoResultado = {
-    caminos,
-    inicial: resultado.inicial,
-    final: resultado.dist,
-    siguiente: resultado.siguiente
-  };
+    mostrarMatrices(resultado.inicial, resultado.dist, resultado.siguiente);
+    crearVisualizaciones(caminos);
+    ultimoResultado = {
+      caminos,
+      inicial: resultado.inicial,
+      final: resultado.dist,
+      siguiente: resultado.siguiente
+    };
+    mostrarTiempoRespuesta(performance.now() - inicio);
+  } finally {
+    ocultarPantallaCarga();
+  }
+}
+
+function mostrarPantallaCarga(mensaje) {
+  textoCarga.textContent = mensaje;
+  pantallaCarga.hidden = false;
+}
+
+function ocultarPantallaCarga() {
+  pantallaCarga.hidden = true;
+}
+
+function permitirRenderizado() {
+  return new Promise((resolver) => {
+    requestAnimationFrame(() => requestAnimationFrame(resolver));
+  });
+}
+
+function mostrarTiempoRespuesta(milisegundos) {
+  const texto = milisegundos < 1000
+    ? `${milisegundos.toFixed(2)} ms`
+    : `${(milisegundos / 1000).toFixed(3)} s`;
+
+  tiempoRespuesta.textContent = `Tiempo de respuesta: ${texto}`;
+  tiempoRespuesta.classList.add("ready");
 }
 
 function mostrarMatrices(inicial, final, siguiente) {
@@ -689,6 +771,7 @@ btnModoNodo.addEventListener("click", () => cambiarModo("agregarNodo"));
 btnModoSeleccionar.addEventListener("click", () => cambiarModo("seleccionar"));
 btnAgregarArco.addEventListener("click", agregarArco);
 btnEliminarNodo.addEventListener("click", eliminarNodo);
+btnConectarAleatorio.addEventListener("click", conectarTodosAleatoriamente);
 btnCalcular.addEventListener("click", calcularFloydWarshall);
 btnLimpiar.addEventListener("click", limpiarTodo);
 window.addEventListener("resize", manejarRedimension);

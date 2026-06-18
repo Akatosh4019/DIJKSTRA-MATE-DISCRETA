@@ -7,6 +7,7 @@ const btnAgregarArco = document.getElementById("btnAgregarArco");
 const btnCalcular = document.getElementById("btnCalcular");
 const btnLimpiar = document.getElementById("btnLimpiar");
 const btnEliminarNodo = document.getElementById("btnEliminarNodo");
+const btnConectarAleatorio = document.getElementById("btnConectarAleatorio");
 
 const txtOrigen = document.getElementById("txtOrigen");
 const txtDestino = document.getElementById("txtDestino");
@@ -18,6 +19,9 @@ const tituloResultados = document.getElementById("tituloResultados");
 const modoActual = document.getElementById("modoActual");
 const ayudaCanvas = document.getElementById("ayudaCanvas");
 const contenedorVisualizaciones = document.getElementById("contenedorVisualizaciones");
+const pantallaCarga = document.getElementById("pantallaCarga");
+const textoCarga = document.getElementById("textoCarga");
+const tiempoRespuesta = document.getElementById("tiempoRespuesta");
 
 const RADIO_NODO = 24;
 const INF = Number.POSITIVE_INFINITY;
@@ -131,6 +135,7 @@ function agregarNodo(posicion) {
   });
 
   ultimoResultado = null;
+  reiniciarTiempoRespuesta();
   actualizarComboInicial();
   limpiarTabla("Aun no hay resultados.");
   limpiarVisualizaciones("Calcule Dijkstra para generar los graficos de caminos.");
@@ -169,6 +174,7 @@ function eliminarNodo() {
 
   txtEliminarNodo.value = "";
   ultimoResultado = null;
+  reiniciarTiempoRespuesta();
   actualizarComboInicial();
   limpiarTabla("Aun no hay resultados.");
   limpiarVisualizaciones("Calcule Dijkstra para generar los graficos de caminos.");
@@ -220,9 +226,56 @@ function agregarArco() {
   txtDestino.value = "";
   txtPeso.value = "";
   ultimoResultado = null;
+  reiniciarTiempoRespuesta();
   limpiarTabla("Aun no hay resultados.");
   limpiarVisualizaciones("Calcule Dijkstra para generar los graficos de caminos.");
   dibujarGrafo();
+}
+
+function conectarTodosAleatoriamente() {
+  if (nodos.length === 0) {
+    mostrarMensaje("No se puede conectar: no hay nodos en la pizarra.");
+    return;
+  }
+
+  if (nodos.length < 2) {
+    mostrarMensaje("Se necesitan al menos dos nodos para crear conexiones.");
+    return;
+  }
+
+  const cantidad = ES_DIRIGIDO
+    ? nodos.length * (nodos.length - 1)
+    : (nodos.length * (nodos.length - 1)) / 2;
+  const tipoTexto = ES_DIRIGIDO ? "dirigidas" : "no dirigidas";
+  const confirmado = window.confirm(
+    `¿Seguro que quieres conectar todos los nodos?\n\n` +
+    `Se reemplazaran las conexiones actuales por ${cantidad} aristas ${tipoTexto} ` +
+    `con pesos aleatorios entre 1 y 99.`
+  );
+
+  if (!confirmado) return;
+
+  arcos = [];
+
+  for (let i = 0; i < nodos.length; i++) {
+    for (let j = 0; j < nodos.length; j++) {
+      if (i === j) continue;
+      if (!ES_DIRIGIDO && j <= i) continue;
+
+      arcos.push({
+        origen: nodos[i].id,
+        destino: nodos[j].id,
+        peso: Math.floor(Math.random() * 99) + 1
+      });
+    }
+  }
+
+  ultimoResultado = null;
+  reiniciarTiempoRespuesta();
+  limpiarTabla("Aun no hay resultados.");
+  limpiarVisualizaciones("Calcule Dijkstra para generar los graficos de caminos.");
+  dibujarGrafo();
+  mostrarMensaje(`Se generaron ${arcos.length} aristas aleatorias.`);
 }
 
 function dijkstra(nodoInicial) {
@@ -294,7 +347,7 @@ function reconstruirCamino(nodoInicial, destino, anteriores) {
   return camino[0] === nodoInicial ? camino : null;
 }
 
-function calcularDijkstra() {
+async function calcularDijkstra() {
   if (nodos.length === 0) {
     mostrarMensaje("Agregue al menos un nodo.");
     return;
@@ -306,44 +359,82 @@ function calcularDijkstra() {
     return;
   }
 
-  const { distancias, anteriores } = dijkstra(nodoInicial);
-  tituloResultados.textContent = `Resultados desde nodo ${nodoInicial}`;
-  tablaResultados.innerHTML = "";
-  const caminosCalculados = [];
+  mostrarPantallaCarga("Calculando Dijkstra...");
+  await permitirRenderizado();
+  const inicio = performance.now();
 
-  nodos.forEach((nodo) => {
-    const fila = document.createElement("tr");
-    const camino = reconstruirCamino(nodoInicial, nodo.id, anteriores);
+  try {
+    const { distancias, anteriores } = dijkstra(nodoInicial);
+    tituloResultados.textContent = `Resultados desde nodo ${nodoInicial}`;
+    tablaResultados.innerHTML = "";
+    const caminosCalculados = [];
 
-    if (distancias[nodo.id] === INF || camino === null) {
-      fila.innerHTML = `
-        <td>${nodo.id}</td>
-        <td>No alcanzable</td>
-        <td>No alcanzable</td>
-      `;
-    } else {
-      caminosCalculados.push({
-        destino: nodo.id,
-        distancia: distancias[nodo.id],
-        camino
-      });
+    nodos.forEach((nodo) => {
+      const fila = document.createElement("tr");
+      const camino = reconstruirCamino(nodoInicial, nodo.id, anteriores);
 
-      fila.innerHTML = `
-        <td>${nodo.id}</td>
-        <td>${distancias[nodo.id]}</td>
-        <td>${camino.join(" -> ")}</td>
-      `;
-    }
+      if (distancias[nodo.id] === INF || camino === null) {
+        fila.innerHTML = `
+          <td>${nodo.id}</td>
+          <td>No alcanzable</td>
+          <td>No alcanzable</td>
+        `;
+      } else {
+        caminosCalculados.push({
+          destino: nodo.id,
+          distancia: distancias[nodo.id],
+          camino
+        });
 
-    tablaResultados.appendChild(fila);
+        fila.innerHTML = `
+          <td>${nodo.id}</td>
+          <td>${distancias[nodo.id]}</td>
+          <td>${camino.join(" -> ")}</td>
+        `;
+      }
+
+      tablaResultados.appendChild(fila);
+    });
+
+    ultimoResultado = {
+      nodoInicial,
+      caminosCalculados
+    };
+    crearVisualizaciones(nodoInicial, caminosCalculados);
+    dibujarGrafo();
+    mostrarTiempoRespuesta(performance.now() - inicio);
+  } finally {
+    ocultarPantallaCarga();
+  }
+}
+
+function mostrarPantallaCarga(mensaje) {
+  textoCarga.textContent = mensaje;
+  pantallaCarga.hidden = false;
+}
+
+function ocultarPantallaCarga() {
+  pantallaCarga.hidden = true;
+}
+
+function permitirRenderizado() {
+  return new Promise((resolver) => {
+    requestAnimationFrame(() => requestAnimationFrame(resolver));
   });
+}
 
-  ultimoResultado = {
-    nodoInicial,
-    caminosCalculados
-  };
-  crearVisualizaciones(nodoInicial, caminosCalculados);
-  dibujarGrafo();
+function mostrarTiempoRespuesta(milisegundos) {
+  const texto = milisegundos < 1000
+    ? `${milisegundos.toFixed(2)} ms`
+    : `${(milisegundos / 1000).toFixed(3)} s`;
+
+  tiempoRespuesta.textContent = `Tiempo de respuesta: ${texto}`;
+  tiempoRespuesta.classList.add("ready");
+}
+
+function reiniciarTiempoRespuesta() {
+  tiempoRespuesta.textContent = "Tiempo de respuesta: --";
+  tiempoRespuesta.classList.remove("ready");
 }
 
 function limpiarTodo() {
@@ -355,6 +446,7 @@ function limpiarTodo() {
   cboInicial.innerHTML = "";
   tituloResultados.textContent = "Resultados";
   ultimoResultado = null;
+  reiniciarTiempoRespuesta();
   limpiarTabla("Aun no hay resultados.");
   limpiarVisualizaciones("Calcule Dijkstra para generar los graficos de caminos.");
   cambiarModo("seleccionar");
@@ -823,6 +915,7 @@ btnAgregarArco.addEventListener("click", agregarArco);
 btnCalcular.addEventListener("click", calcularDijkstra);
 btnLimpiar.addEventListener("click", limpiarTodo);
 btnEliminarNodo.addEventListener("click", eliminarNodo);
+btnConectarAleatorio.addEventListener("click", conectarTodosAleatoriamente);
 window.addEventListener("resize", manejarRedimension);
 
 ajustarCanvas();

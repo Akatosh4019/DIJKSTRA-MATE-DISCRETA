@@ -56,7 +56,9 @@
       <section class="panel">
         <h2>Floyd-Warshall</h2>
         <p class="small-copy">No requiere nodo inicial: calcula caminos minimos entre todos los nodos.</p>
+        <button class="random-button" id="btnConectarAleatorio">Conectar Todos Aleatoriamente</button>
         <button class="success" id="btnCalcular">Calcular Floyd-Warshall</button>
+        <div class="performance-result" id="tiempoRespuesta">Tiempo de respuesta: --</div>
         <button class="danger" id="btnLimpiar">Limpiar</button>
       </section>
 
@@ -122,6 +124,14 @@
       <div class="visual-empty">Calcule Floyd-Warshall para generar los caminos.</div>
     </div>
   </section>
+
+  <div class="loading-overlay" id="pantallaCarga" hidden>
+    <div class="loading-box">
+      <div class="loading-spinner"></div>
+      <strong id="textoCarga">Calculando Floyd-Warshall...</strong>
+      <p>Procesando matrices, caminos y visualizaciones.</p>
+    </div>
+  </div>
 
   <script src="app-floyd.js"></script>
 </body>
