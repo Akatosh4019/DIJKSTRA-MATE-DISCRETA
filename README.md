@@ -23,6 +23,9 @@ Opcion con extension:
 ## Funcionamiento
 
 - La pagina principal muestra dos opciones: `Dijkstra` y `Floyd-Warshall`.
+- Tambien incluye un comparador que genera el mismo grafo aleatorio para ambos algoritmos.
+- El comparador elige un nodo inicial: Dijkstra calcula solo desde ese origen y Floyd-Warshall calcula toda la matriz.
+- Luego verifica que la fila correspondiente de Floyd coincida con Dijkstra y compara sus tiempos.
 - Antes de entrar, permite elegir entre aristas `Dirigidas` y `No dirigidas`.
 - En cada simulador, presione `Agregar Nodo` y haga clic en el area de dibujo.
 - Escriba origen, destino y peso para agregar una arista.

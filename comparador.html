@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comparador de algoritmos - Roberto Samuel Valencia Saavedra</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-compare">
+  <main class="benchmark-page">
+    <header class="benchmark-topbar">
+      <div>
+        <p class="page-badge" id="tipoGrafoBadge">Prueba comparativa</p>
+        <h1>Dijkstra vs. Floyd-Warshall</h1>
+        <p>Mismo grafo y mismas distancias desde un nodo inicial.</p>
+      </div>
+      <a class="nav-link" href="index.html">Volver al inicio</a>
+    </header>
+
+    <section class="benchmark-intro">
+      <div>
+        <span>Que se compara</span>
+        <h2>Distancias desde un nodo inicial</h2>
+        <p>
+          Dijkstra calcula solamente desde el origen elegido. Floyd-Warshall calcula toda
+          la matriz aunque al final solo consultemos la fila de ese mismo origen. Asi se
+          demuestra por que Dijkstra suele ser mas rapido cuando se necesita un solo inicio.
+        </p>
+      </div>
+      <div class="benchmark-formula">
+        <strong>Dijkstra: un origen</strong>
+        <span>contra</span>
+        <strong>Floyd: matriz completa</strong>
+      </div>
+    </section>
+
+    <section class="benchmark-controls">
+      <div class="control-field">
+        <label for="cantidadNodos">Cantidad de nodos</label>
+        <input id="cantidadNodos" type="number" min="20" max="150" value="60">
+        <small>Entre 20 y 150 nodos para una medicion estable.</small>
+      </div>
+
+      <div class="control-field">
+        <label for="densidadAristas">Densidad del grafo</label>
+        <div class="range-row">
+          <input id="densidadAristas" type="range" min="10" max="100" value="35">
+          <strong id="valorDensidad">35%</strong>
+        </div>
+        <small>Porcentaje de conexiones posibles.</small>
+      </div>
+
+      <div class="control-field">
+        <label for="repeticiones">Repeticiones</label>
+        <select id="repeticiones">
+          <option value="3">3 pruebas</option>
+          <option value="5" selected>5 pruebas</option>
+          <option value="10">10 pruebas</option>
+        </select>
+        <small>Se usa la mediana para reducir variaciones.</small>
+      </div>
+
+      <button class="benchmark-run" id="btnEjecutarComparacion">Generar Grafo y Comparar</button>
+    </section>
+
+    <section class="dual-graph-section">
+      <header>
+        <div>
+          <span>Prueba visual sincronizada</span>
+          <h2>El mismo grafo para ambos algoritmos</h2>
+        </div>
+        <p id="estadoGrafos">Preparando grafo de demostracion...</p>
+      </header>
+
+      <div class="dual-graph-grid">
+        <article class="graph-test-card dijkstra-test">
+          <div class="graph-test-title">
+            <div>
+              <span>Algoritmo voraz</span>
+              <h3>Dijkstra desde un origen</h3>
+            </div>
+            <strong id="tiempoDijkstraVisual">--</strong>
+          </div>
+          <canvas id="canvasDijkstra" width="560" height="390"></canvas>
+        </article>
+
+        <article class="graph-test-card floyd-test">
+          <div class="graph-test-title">
+            <div>
+              <span>Programacion dinamica</span>
+              <h3>Floyd-Warshall completo</h3>
+            </div>
+            <strong id="tiempoFloydVisual">--</strong>
+          </div>
+          <canvas id="canvasFloyd" width="560" height="390"></canvas>
+        </article>
+      </div>
+    </section>
+
+    <section class="benchmark-summary" id="resumenPrueba">
+      <div>
+        <span>Nodos</span>
+        <strong>--</strong>
+      </div>
+      <div>
+        <span>Aristas</span>
+        <strong>--</strong>
+      </div>
+      <div>
+        <span>Nodo inicial</span>
+        <strong>--</strong>
+      </div>
+      <div>
+        <span>Fila verificada</span>
+        <strong>--</strong>
+      </div>
+    </section>
+
+    <section class="benchmark-results" id="resultadosComparacion">
+      <div class="benchmark-empty">
+        <strong>La prueba aun no ha comenzado</strong>
+        <p>Configura el grafo y pulsa el boton para medir ambos algoritmos.</p>
+      </div>
+    </section>
+
+    <section class="benchmark-guide">
+      <article>
+        <span>Dijkstra conviene cuando...</span>
+        <p>Necesitas rutas desde uno o pocos origenes, especialmente en grafos grandes y poco densos.</p>
+      </article>
+      <article>
+        <span>Floyd-Warshall conviene cuando...</span>
+        <p>Necesitas consultar muchas rutas entre todos los pares y el grafo tiene un tamano moderado.</p>
+      </article>
+    </section>
+  </main>
+
+  <div class="loading-overlay" id="pantallaCarga" hidden>
+    <div class="loading-box">
+      <div class="loading-spinner"></div>
+      <strong>Comparando algoritmos...</strong>
+      <p id="estadoCarga">Generando el mismo grafo para ambos metodos.</p>
+    </div>
+  </div>
+
+  <script src="app-comparador.js"></script>
+</body>
+</html>
