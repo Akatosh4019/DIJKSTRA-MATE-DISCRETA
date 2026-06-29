@@ -2018,6 +2018,10 @@ td:nth-child(2) {
     0 34px 90px rgba(2, 6, 23, 0.38);
 }
 
+.digital-vending-machine.machine-vend {
+  animation: machineVend 0.55s ease both;
+}
+
 .machine-brand {
   display: flex;
   align-items: center;
@@ -2107,11 +2111,81 @@ td:nth-child(2) {
 
 .console-panel {
   padding: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.console-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 12%, rgba(250, 204, 21, 0.18), transparent 7rem),
+    radial-gradient(circle at 92% 18%, rgba(20, 184, 166, 0.18), transparent 8rem);
+  pointer-events: none;
 }
 
 .console-panel h2 {
+  position: relative;
+  z-index: 1;
   margin-bottom: 10px;
   font-size: 18px;
+}
+
+.coin-insert-visual {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  min-height: 78px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(153, 246, 228, 0.34);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.18), rgba(2, 6, 23, 0.46)),
+    repeating-linear-gradient(90deg, transparent 0 16px, rgba(255, 255, 255, 0.05) 16px 17px);
+  box-shadow:
+    inset 0 14px 24px rgba(0, 0, 0, 0.22),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.coin-slot-line {
+  width: min(180px, 82%);
+  height: 16px;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, #020617, #0f172a 58%, #334155);
+  box-shadow:
+    0 0 0 2px rgba(250, 204, 21, 0.34),
+    0 12px 22px rgba(0, 0, 0, 0.28),
+    inset 0 3px 7px rgba(0, 0, 0, 0.72);
+}
+
+.inserted-coin {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 2px solid #facc15;
+  border-radius: 50%;
+  color: #78350f;
+  background:
+    radial-gradient(circle at 35% 30%, #fff7ad, #facc15 48%, #d97706 100%);
+  box-shadow:
+    0 12px 20px rgba(0, 0, 0, 0.28),
+    inset 0 2px 0 rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  font-weight: 950;
+  opacity: 0;
+  transform: translate(-50%, -18px) scale(0.72);
+  pointer-events: none;
+}
+
+.inserted-coin.coin-inserting {
+  animation: coinInsert 0.82s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .machine-settings {
@@ -2137,8 +2211,9 @@ td:nth-child(2) {
   grid-template-columns: 64px 1fr;
   align-items: center;
   gap: 12px;
-  min-height: 116px;
+  min-height: 138px;
   padding: 12px;
+  overflow: hidden;
 }
 
 .product-drop > span {
@@ -2153,11 +2228,106 @@ td:nth-child(2) {
   height: 92px;
   justify-self: center;
   border-radius: 18px 18px 12px 12px;
+  opacity: 0.62;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.38), transparent 28%, rgba(0, 0, 0, 0.2) 82%),
+    linear-gradient(160deg, var(--drop-color, #f97316), #ef4444 54%, #facc15);
+  transform: translateY(-6px) scale(0.92) rotate(-3deg);
+  animation: none;
 }
 
 .product-drop .product-can span {
   max-width: 58px;
   font-size: 11px;
+}
+
+.product-drop .product-can.with-image {
+  width: 86px;
+  height: 108px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 16px 28px rgba(0, 0, 0, 0.32),
+    inset 0 0 0 1px rgba(14, 165, 233, 0.18);
+}
+
+.product-drop .product-can.with-image img {
+  width: 68px;
+  height: 92px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 10px rgba(15, 23, 42, 0.22));
+}
+
+.product-drop .product-can.with-image span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.product-drop .product-can.product-delivered {
+  opacity: 1;
+  animation: productDrop 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.drop-display {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.change-tray {
+  display: flex;
+  align-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 66px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.52), rgba(2, 6, 23, 0.78)),
+    repeating-linear-gradient(90deg, transparent 0 10px, rgba(255, 255, 255, 0.05) 10px 11px);
+  box-shadow:
+    inset 0 8px 18px rgba(0, 0, 0, 0.28),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.change-coin {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 2px solid #f59e0b;
+  border-radius: 50%;
+  color: #78350f;
+  background:
+    radial-gradient(circle at 35% 30%, #fff7ad, #facc15 46%, #d97706 100%);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.28),
+    inset 0 2px 0 rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  font-weight: 950;
+  animation: coinPop 0.46s ease both;
+}
+
+.change-extra,
+.empty-change,
+.no-change {
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.change-extra {
+  padding: 7px 9px;
+  border-radius: 999px;
+  color: #fef3c7;
+  background: rgba(249, 115, 22, 0.28);
 }
 
 .vending-layout {
@@ -2173,28 +2343,67 @@ td:nth-child(2) {
 }
 
 .coin-grid {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 9px;
 }
 
 .coin-button {
+  position: relative;
   height: 54px;
   margin: 0;
   color: #ffffff;
-  background: linear-gradient(135deg, #0f766e, #f97316);
-  box-shadow: 0 12px 24px rgba(15, 118, 110, 0.2);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.42), transparent 1.8rem),
+    linear-gradient(135deg, #0f766e, #f97316);
+  box-shadow:
+    0 12px 24px rgba(15, 118, 110, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.coin-button::after {
+  content: "";
+  position: absolute;
+  top: -30%;
+  left: -45%;
+  width: 42%;
+  height: 160%;
+  background: rgba(255, 255, 255, 0.28);
+  transform: rotate(22deg);
+  transition: left 0.34s ease;
+}
+
+.coin-button:hover::after {
+  left: 112%;
+}
+
+.coin-button:active {
+  transform: translateY(1px) scale(0.98);
 }
 
 .vending-status {
+  position: relative;
+  z-index: 1;
   margin-top: 12px;
-  padding: 11px;
-  border: 1px solid #99f6e4;
+  padding: 12px 13px;
+  border: 1px solid rgba(153, 246, 228, 0.75);
   border-radius: 8px;
-  color: #134e4a;
-  background: #ccfbf1;
+  color: #ecfeff;
+  background:
+    linear-gradient(135deg, rgba(15, 118, 110, 0.92), rgba(14, 165, 233, 0.68)),
+    #0f766e;
+  box-shadow:
+    0 12px 24px rgba(15, 118, 110, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
   font-weight: 900;
   text-align: center;
+}
+
+.vending-status.status-updated {
+  animation: statusPulse 0.58s ease both;
 }
 
 .formal-list {
@@ -2269,6 +2478,18 @@ td:nth-child(2) {
   color: #facc15;
   font-size: 56px;
   line-height: 1;
+}
+
+.machine-screen strong::before {
+  content: "S/";
+  margin-right: 4px;
+  color: #ccfbf1;
+  font-size: 24px;
+  vertical-align: super;
+}
+
+.machine-screen strong.saldo-updated {
+  animation: saldoPulse 0.58s ease both;
 }
 
 .machine-screen small {
@@ -2368,6 +2589,7 @@ td:nth-child(2) {
 
 .products-section,
 .formal-section,
+.mef-overview-section,
 .shortest-section,
 .state-diagram-section,
 .transition-section {
@@ -2382,6 +2604,7 @@ td:nth-child(2) {
 
 .products-section header,
 .formal-section header,
+.mef-overview-section header,
 .shortest-section header,
 .state-diagram-section header,
 .transition-section header {
@@ -2394,6 +2617,7 @@ td:nth-child(2) {
 
 .products-section h2,
 .formal-section h2,
+.mef-overview-section h2,
 .shortest-section h2,
 .state-diagram-section h2,
 .transition-section h2 {
@@ -2402,12 +2626,89 @@ td:nth-child(2) {
 }
 
 .products-section p,
+.mef-overview-section p,
 .shortest-section p,
 .state-diagram-section p,
 .transition-section p {
   max-width: 520px;
   color: #64748b;
   text-align: right;
+}
+
+.mef-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+.mef-card {
+  min-width: 0;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.1);
+}
+
+.mef-card-header {
+  min-height: 72px;
+  padding: 13px 15px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #0f766e, #2563eb);
+}
+
+.mef-card-header span {
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+  opacity: 0.82;
+}
+
+.mef-card-header h3 {
+  margin: 4px 0 0;
+  font-size: 21px;
+}
+
+.mef-card canvas {
+  display: block;
+  width: 100%;
+  height: 620px;
+  background:
+    linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+    #ffffff;
+  background-size: 24px 24px;
+}
+
+.mef-explain-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mef-explain-grid div {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #dbe3ee;
+  border-left: 5px solid #0f766e;
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(20, 184, 166, 0.1), transparent 13rem),
+    #f8fafc;
+}
+
+.mef-explain-grid strong {
+  display: block;
+  color: #0f766e;
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.mef-explain-grid p {
+  margin-top: 7px;
+  color: #64748b;
+  text-align: left;
+  line-height: 1.55;
 }
 
 .shortest-grid {
@@ -2464,21 +2765,6 @@ td:nth-child(2) {
   position: relative;
 }
 
-.state-diagram-section::after {
-  content: "Estado con doble borde = producto desbloqueado";
-  position: absolute;
-  right: 36px;
-  bottom: 34px;
-  padding: 9px 12px;
-  border: 1px solid #86efac;
-  border-radius: 999px;
-  color: #166534;
-  background: rgba(220, 252, 231, 0.92);
-  font-size: 12px;
-  font-weight: 900;
-  pointer-events: none;
-}
-
 .product-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2515,6 +2801,10 @@ td:nth-child(2) {
   transform: rotate(-5deg);
 }
 
+.product-option.has-image::before {
+  display: none;
+}
+
 .product-option span {
   display: inline-flex;
   padding: 6px 9px;
@@ -2523,6 +2813,22 @@ td:nth-child(2) {
   background: var(--product-color);
   font-size: 12px;
   font-weight: 950;
+}
+
+.product-option .product-thumb {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1;
+  width: 60px;
+  height: 86px;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 14px rgba(15, 23, 42, 0.22));
+  transform: rotate(-3deg);
+}
+
+.product-option .product-code {
+  margin-top: 9px;
 }
 
 .product-option strong {
@@ -2591,7 +2897,7 @@ td:nth-child(2) {
 
 #diagramaEstados {
   width: 100%;
-  height: 620px;
+  height: 700px;
   border: 1px solid #dbe3ee;
   border-radius: 8px;
   background:
@@ -2737,6 +3043,97 @@ td:nth-child(2) {
   }
 }
 
+@keyframes productDrop {
+  0% {
+    opacity: 0;
+    transform: translateY(-120px) scale(0.72) rotate(-12deg);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(10px) scale(1.05) rotate(4deg);
+  }
+  78% {
+    transform: translateY(-5px) scale(0.98) rotate(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0);
+  }
+}
+
+@keyframes coinPop {
+  from {
+    opacity: 0;
+    transform: translateY(-22px) scale(0.48) rotate(-25deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0);
+  }
+}
+
+@keyframes machineVend {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  25% {
+    transform: translateY(-2px) rotate(-0.2deg);
+  }
+  55% {
+    transform: translateY(2px) rotate(0.2deg);
+  }
+}
+
+@keyframes coinInsert {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -24px) scale(0.65) rotate(-24deg);
+  }
+  24% {
+    opacity: 1;
+    transform: translate(-50%, -2px) scale(1) rotate(12deg);
+  }
+  62% {
+    opacity: 1;
+    transform: translate(-50%, 24px) scale(0.96) rotate(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 36px) scale(0.42) rotate(18deg);
+  }
+}
+
+@keyframes saldoPulse {
+  0%,
+  100% {
+    text-shadow: none;
+    transform: scale(1);
+  }
+  45% {
+    color: #fef3c7;
+    text-shadow: 0 0 22px rgba(250, 204, 21, 0.7);
+    transform: scale(1.08);
+  }
+}
+
+@keyframes statusPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 12px 24px rgba(15, 118, 110, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    transform: scale(1);
+  }
+  45% {
+    box-shadow:
+      0 0 0 4px rgba(250, 204, 21, 0.24),
+      0 16px 30px rgba(15, 118, 110, 0.26),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transform: scale(1.025);
+  }
+}
+
 @media (max-width: 980px) {
   .algorithm-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2798,6 +3195,7 @@ td:nth-child(2) {
   .machine-brand,
   .products-section header,
   .state-diagram-section header,
+  .mef-overview-section header,
   .shortest-section header,
   .transition-section header {
     align-items: flex-start;
@@ -2810,6 +3208,7 @@ td:nth-child(2) {
 
   .products-section p,
   .state-diagram-section p,
+  .mef-overview-section p,
   .shortest-section p,
   .transition-section p {
     text-align: left;
@@ -2820,6 +3219,11 @@ td:nth-child(2) {
   }
 
   .shortest-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mef-grid,
+  .mef-explain-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -2888,6 +3292,14 @@ td:nth-child(2) {
     grid-template-columns: 1fr;
   }
 
+  .product-drop {
+    grid-template-columns: 1fr;
+  }
+
+  .drop-display {
+    grid-template-columns: 82px minmax(0, 1fr);
+  }
+
   .vending-machine-stage,
   .digital-vending-machine {
     padding: 12px;
@@ -2903,7 +3315,7 @@ td:nth-child(2) {
   }
 
   #diagramaEstados {
-    height: 560px;
+    height: 720px;
   }
 
   .product-grid {

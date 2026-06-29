@@ -42,6 +42,10 @@
 
             <div class="console-panel">
               <h2>Insertar dinero</h2>
+              <div class="coin-insert-visual" aria-hidden="true">
+                <div class="coin-slot-line"></div>
+                <div class="inserted-coin" id="monedaAnimada">S/</div>
+              </div>
               <div id="botonesMonedas" class="coin-grid"></div>
               <div class="vending-status" id="estadoActual">Estado actual: q0</div>
             </div>
@@ -63,15 +67,20 @@
 
             <div class="product-drop">
               <span>Salida</span>
-              <div class="product-can" id="productoVisual">
-                <span id="productoEtiqueta">Sin producto</span>
+              <div class="drop-display">
+                <div class="product-can" id="productoVisual">
+                  <span id="productoEtiqueta">Sin producto</span>
+                </div>
+                <div class="change-tray" id="bandejaVuelto" aria-live="polite">
+                  <span class="empty-change">Vuelto aqui</span>
+                </div>
               </div>
             </div>
 
             <details class="machine-settings">
               <summary>Configurar monedas</summary>
               <label for="monedas">Simbolos de entrada</label>
-              <input id="monedas" type="text" value="1,2,5">
+              <input id="monedas" type="text" value="1,2,5" placeholder="Ejemplo: 1,2,3,5,10">
               <button class="primary" id="actualizarMaquina" type="button">Actualizar</button>
               <button class="danger" id="reiniciarMaquina" type="button">Reiniciar</button>
             </details>
@@ -90,15 +99,50 @@
       </p>
     </section>
 
+    <section class="mef-overview-section">
+      <header>
+        <div>
+          <span>Modelo separado</span>
+          <h2>Dos MEF conectadas</h2>
+        </div>
+        <p>La MEF principal contiene el estado Control de dinero ingresado; su detalle interno se visualiza como otra MEF.</p>
+      </header>
+      <div class="mef-grid">
+        <article class="mef-card">
+          <div class="mef-card-header">
+            <span>MEF 1</span>
+            <h3>Control de la maquina expendedora</h3>
+          </div>
+          <canvas id="diagramaMaquina"></canvas>
+        </article>
+        <article class="mef-card">
+          <div class="mef-card-header">
+            <span>MEF 2</span>
+            <h3>Control de dinero ingresado</h3>
+          </div>
+          <canvas id="diagramaEstados"></canvas>
+        </article>
+      </div>
+    </section>
+
     <section class="state-diagram-section">
       <header>
         <div>
-          <span>Diagrama como grafo</span>
-          <h2>Estados y transiciones</h2>
+          <span>Lectura del modelo</span>
+          <h2>Como se conectan las dos MEF</h2>
         </div>
-        <p>Los estados verdes/doble borde representan saldo suficiente para comprar productos.</p>
+        <p>El estado Control de dinero ingresado de la MEF 1 se detalla en la MEF 2, donde viven q0 hasta q6.</p>
       </header>
-      <canvas id="diagramaEstados"></canvas>
+      <div class="mef-explain-grid">
+        <div>
+          <strong>MEF 1 decide el flujo general</strong>
+          <p>Espera dinero, entra al control de dinero, habilita productos, entrega producto, calcula vuelto y reinicia.</p>
+        </div>
+        <div>
+          <strong>MEF 2 calcula el saldo</strong>
+          <p>Cada moneda cambia el estado interno de dinero. q3 habilita minis, q5 bebidas y q6 snacks completos.</p>
+        </div>
+      </div>
     </section>
 
     <section class="shortest-section">

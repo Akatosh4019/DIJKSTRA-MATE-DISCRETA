@@ -7,28 +7,33 @@ const conjuntoEstados = document.getElementById("conjuntoEstados");
 const alfabetoEntrada = document.getElementById("alfabetoEntrada");
 const saldoPantalla = document.getElementById("saldoPantalla");
 const mensajePantalla = document.getElementById("mensajePantalla");
-const productoEtiqueta = document.getElementById("productoEtiqueta");
+const productoVisual = document.getElementById("productoVisual");
+const bandejaVuelto = document.getElementById("bandejaVuelto");
+const maquinaVisual = document.querySelector(".digital-vending-machine");
+const monedaAnimada = document.getElementById("monedaAnimada");
 const ultimaEntrada = document.getElementById("ultimaEntrada");
 const salidaProducto = document.getElementById("salidaProducto");
 const salidaVuelto = document.getElementById("salidaVuelto");
 const listaProductos = document.getElementById("listaProductos");
 const tablaCaminosCortos = document.getElementById("tablaCaminosCortos");
+const diagramaMaquina = document.getElementById("diagramaMaquina");
 const diagramaEstados = document.getElementById("diagramaEstados");
 const tablaTransiciones = document.getElementById("tablaTransiciones");
 const toast = document.getElementById("toast");
 
 const ctx = diagramaEstados.getContext("2d");
+const ctxMaquina = diagramaMaquina.getContext("2d");
 
 const productos = [
-  { codigo: "A1", nombre: "Coca Cola", precio: 5, color: "#ef4444" },
-  { codigo: "A2", nombre: "Agua", precio: 5, color: "#38bdf8" },
-  { codigo: "A3", nombre: "Pepsi", precio: 5, color: "#2563eb" },
-  { codigo: "A4", nombre: "Jugo", precio: 5, color: "#22c55e" },
-  { codigo: "B1", nombre: "Papas", precio: 6, color: "#eab308" },
-  { codigo: "B2", nombre: "Galletas", precio: 6, color: "#f59e0b" },
-  { codigo: "B3", nombre: "Chocolate", precio: 6, color: "#7c2d12" },
-  { codigo: "C1", nombre: "Mini galleta", precio: 3, color: "#fb923c" },
-  { codigo: "C2", nombre: "Mini cereal", precio: 3, color: "#a855f7" }
+  { codigo: "A1", nombre: "Coca Cola", precio: 5, color: "#ef4444", imagen: "assets/productos/coca-cola.png" },
+  { codigo: "A2", nombre: "Agua", precio: 5, color: "#38bdf8", imagen: "assets/productos/agua-ya.png" },
+  { codigo: "A3", nombre: "Pepsi", precio: 5, color: "#2563eb", imagen: "assets/productos/pepsi.png" },
+  { codigo: "A4", nombre: "Jugo", precio: 5, color: "#22c55e", imagen: "assets/productos/jugo.png" },
+  { codigo: "B1", nombre: "Papas", precio: 6, color: "#eab308", imagen: "assets/productos/lays.png" },
+  { codigo: "B2", nombre: "Galletas", precio: 6, color: "#f59e0b", imagen: "assets/productos/galletas.png" },
+  { codigo: "B3", nombre: "Chocolate", precio: 6, color: "#7c2d12", imagen: "assets/productos/chocolate.png" },
+  { codigo: "C1", nombre: "Mini galleta", precio: 3, color: "#fb923c", imagen: "assets/productos/mini-galletas.png" },
+  { codigo: "C2", nombre: "Mini cereal", precio: 3, color: "#a855f7", imagen: "assets/productos/mini-cereal.png" }
 ];
 
 let monedas = [1, 2, 5];
@@ -36,6 +41,8 @@ let saldo = 0;
 let productoEntregado = null;
 let transicionActiva = null;
 let toastTimer = null;
+
+const coloresMonedas = ["#2563eb", "#7c3aed", "#16a34a", "#db2777", "#0891b2", "#ca8a04", "#4f46e5"];
 
 function maxPrecio() {
   return Math.max(...productos.map((producto) => producto.precio));
@@ -54,6 +61,103 @@ function mostrarToast(mensaje) {
   }, 2600);
 }
 
+function reiniciarAnimacion(elemento, clase) {
+  if (!elemento) return;
+
+  elemento.classList.remove(clase);
+  void elemento.offsetWidth;
+  elemento.classList.add(clase);
+}
+
+function limpiarSalidaVisual() {
+  if (productoVisual) {
+    productoVisual.classList.remove("product-delivered");
+    productoVisual.classList.remove("with-image");
+    productoVisual.style.removeProperty("--drop-color");
+    productoVisual.innerHTML = `<span id="productoEtiqueta">Elige un producto</span>`;
+  }
+
+  if (bandejaVuelto) {
+    bandejaVuelto.innerHTML = `<span class="empty-change">Vuelto aqui</span>`;
+  }
+}
+
+function descomponerVuelto(vuelto) {
+  if (vuelto <= 0) return [];
+
+  const disponibles = [...monedas, 1]
+    .filter((moneda) => moneda > 0 && moneda <= vuelto)
+    .sort((a, b) => b - a);
+  const unicas = [...new Set(disponibles)];
+  const resultado = [];
+  let restante = vuelto;
+
+  unicas.forEach((moneda) => {
+    while (restante >= moneda) {
+      resultado.push(moneda);
+      restante -= moneda;
+    }
+  });
+
+  return resultado;
+}
+
+function renderVueltoAnimado(vuelto) {
+  if (!bandejaVuelto) return;
+
+  bandejaVuelto.innerHTML = "";
+
+  if (vuelto <= 0) {
+    const sinVuelto = document.createElement("span");
+    sinVuelto.className = "no-change";
+    sinVuelto.textContent = "Sin vuelto";
+    bandejaVuelto.appendChild(sinVuelto);
+    return;
+  }
+
+  const monedasVuelto = descomponerVuelto(vuelto);
+  const visibles = monedasVuelto.slice(0, 8);
+
+  visibles.forEach((valor, indice) => {
+    const moneda = document.createElement("span");
+    moneda.className = "change-coin";
+    moneda.textContent = `S/${valor}`;
+    moneda.style.animationDelay = `${indice * 0.08}s`;
+    bandejaVuelto.appendChild(moneda);
+  });
+
+  if (monedasVuelto.length > visibles.length) {
+    const extra = document.createElement("span");
+    extra.className = "change-extra";
+    extra.textContent = `+${monedasVuelto.length - visibles.length}`;
+    bandejaVuelto.appendChild(extra);
+  }
+}
+
+function animarEntrega(producto, vuelto) {
+  if (productoVisual) {
+    productoVisual.style.setProperty("--drop-color", producto.color);
+    productoVisual.classList.toggle("with-image", Boolean(producto.imagen));
+    productoVisual.innerHTML = producto.imagen
+      ? `<img src="${producto.imagen}" alt="${producto.nombre}"><span>${producto.nombre}</span>`
+      : `<span>${producto.nombre}</span>`;
+    reiniciarAnimacion(productoVisual, "product-delivered");
+  }
+
+  reiniciarAnimacion(maquinaVisual, "machine-vend");
+  renderVueltoAnimado(vuelto);
+}
+
+function animarInsercionMoneda(moneda) {
+  if (monedaAnimada) {
+    monedaAnimada.textContent = `S/${moneda}`;
+    reiniciarAnimacion(monedaAnimada, "coin-inserting");
+  }
+
+  reiniciarAnimacion(saldoPantalla, "saldo-updated");
+  reiniciarAnimacion(estadoActual, "status-updated");
+}
+
 function parsearMonedas() {
   const valores = monedasInput.value
     .split(",")
@@ -61,6 +165,21 @@ function parsearMonedas() {
     .filter((valor) => Number.isInteger(valor) && valor > 0);
 
   return [...new Set(valores)].sort((a, b) => a - b);
+}
+
+function estiloMoneda(moneda) {
+  const indice = Math.max(0, monedas.indexOf(moneda));
+  const color = coloresMonedas[indice % coloresMonedas.length];
+  const mitad = (monedas.length - 1) / 2;
+  const distancia = indice - mitad;
+  const direccion = indice % 2 === 0 ? -1 : 1;
+  const magnitud = Math.min(170, 34 + Math.abs(distancia) * 34 + indice * 8);
+
+  return {
+    color,
+    curva: direccion * magnitud,
+    offset: direccion * 10
+  };
 }
 
 function calcularTransicion(estado, moneda) {
@@ -108,12 +227,16 @@ function renderProductos() {
     const habilitado = saldo >= producto.precio;
     const tarjeta = document.createElement("button");
     tarjeta.type = "button";
-    tarjeta.className = `product-option${habilitado ? " enabled" : " locked"}`;
+    tarjeta.className = `product-option${producto.imagen ? " has-image" : ""}${habilitado ? " enabled" : " locked"}`;
     tarjeta.disabled = !habilitado;
     tarjeta.style.setProperty("--product-color", producto.color);
+    const visualProducto = producto.imagen
+      ? `<img class="product-thumb" src="${producto.imagen}" alt="${producto.nombre}">`
+      : `<span>${producto.codigo}</span>`;
     tarjeta.innerHTML = `
-      <span>${producto.codigo}</span>
+      ${visualProducto}
       <strong>${producto.nombre}</strong>
+      <span class="product-code">${producto.codigo}</span>
       <small>Precio: ${producto.precio}</small>
       <em>${habilitado ? "Comprar" : `Faltan ${producto.precio - saldo}`}</em>
     `;
@@ -235,34 +358,223 @@ function ajustarCanvas() {
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
 }
 
+function ajustarCanvasGenerico(canvas, contexto) {
+  const rect = canvas.getBoundingClientRect();
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+  canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+  contexto.setTransform(ratio, 0, 0, ratio, 0, 0);
+}
+
+function dibujarFlechaContexto(contexto, origen, destino, etiqueta, color, curvatura = 0) {
+  const dx = destino.x - origen.x;
+  const dy = destino.y - origen.y;
+  const distancia = Math.hypot(dx, dy) || 1;
+  const nx = dx / distancia;
+  const ny = dy / distancia;
+  const origenBorde = distanciaBordeEstado(origen, nx, ny);
+  const destinoBorde = distanciaBordeEstado(destino, nx, ny);
+  const inicioX = origen.x + nx * (origenBorde + 5);
+  const inicioY = origen.y + ny * (origenBorde + 5);
+  const finX = destino.x - nx * (destinoBorde + 6);
+  const finY = destino.y - ny * (destinoBorde + 6);
+  let controlX = (inicioX + finX) / 2 - ny * curvatura;
+  let controlY = (inicioY + finY) / 2 + nx * curvatura;
+
+  if (origen.exterior && destino.exterior) {
+    const centroX = diagramaMaquina.clientWidth * 0.5;
+    const centroY = diagramaMaquina.clientHeight * 0.56;
+    const medioX = (inicioX + finX) / 2;
+    const medioY = (inicioY + finY) / 2;
+    const vx = medioX - centroX;
+    const vy = medioY - centroY;
+    const magnitud = Math.hypot(vx, vy) || 1;
+    controlX = medioX + (vx / magnitud) * Math.abs(curvatura);
+    controlY = medioY + (vy / magnitud) * Math.abs(curvatura);
+  }
+
+  contexto.strokeStyle = color;
+  contexto.lineWidth = 4.2;
+  contexto.lineCap = "round";
+  contexto.beginPath();
+  contexto.moveTo(inicioX, inicioY);
+  contexto.quadraticCurveTo(controlX, controlY, finX, finY);
+  contexto.stroke();
+  contexto.lineCap = "butt";
+
+  dibujarPuntaFlecha(contexto, finX, finY, Math.atan2(finY - controlY, finX - controlX), color, 21);
+
+  contexto.font = "900 13px Segoe UI";
+  const ancho = contexto.measureText(etiqueta).width + 18;
+  const textoX = controlX - ancho / 2 + 6;
+  const textoY = controlY - 10;
+  contexto.fillStyle = "rgba(255, 255, 255, 0.96)";
+  contexto.beginPath();
+  contexto.roundRect(textoX - 9, textoY - 18, ancho, 26, 9);
+  contexto.fill();
+  contexto.strokeStyle = color;
+  contexto.lineWidth = 1.5;
+  contexto.stroke();
+  contexto.fillStyle = "#334155";
+  contexto.fillText(etiqueta, textoX, textoY);
+}
+
+function distanciaBordeEstado(estado, nx, ny) {
+  if (!estado.w || !estado.h) return estado.r || 44;
+
+  const mitadAncho = estado.w / 2;
+  const mitadAlto = estado.h / 2;
+  const distanciaX = Math.abs(nx) < 0.001 ? Infinity : mitadAncho / Math.abs(nx);
+  const distanciaY = Math.abs(ny) < 0.001 ? Infinity : mitadAlto / Math.abs(ny);
+  return Math.min(distanciaX, distanciaY);
+}
+
+function dibujarPuntaFlecha(contexto, x, y, angulo, color, tamano = 18) {
+  contexto.save();
+  contexto.fillStyle = color;
+  contexto.strokeStyle = "#ffffff";
+  contexto.lineWidth = 1.4;
+  contexto.beginPath();
+  contexto.moveTo(x, y);
+  contexto.lineTo(x - tamano * Math.cos(angulo - Math.PI / 6), y - tamano * Math.sin(angulo - Math.PI / 6));
+  contexto.lineTo(x - tamano * 0.45 * Math.cos(angulo), y - tamano * 0.45 * Math.sin(angulo));
+  contexto.lineTo(x - tamano * Math.cos(angulo + Math.PI / 6), y - tamano * Math.sin(angulo + Math.PI / 6));
+  contexto.closePath();
+  contexto.fill();
+  contexto.stroke();
+  contexto.restore();
+}
+
+function dibujarEstadoMaquina(contexto, estado, activo = false, compuesto = false, aceptacion = false) {
+  const radio = estado.r || 54;
+  contexto.fillStyle = activo ? "#fef3c7" : compuesto ? "#dbeafe" : aceptacion ? "#dcfce7" : "#ffffff";
+  contexto.strokeStyle = activo ? "#f97316" : compuesto ? "#2563eb" : aceptacion ? "#16a34a" : "#0f766e";
+  contexto.lineWidth = activo ? 4 : 2.8;
+  contexto.beginPath();
+  contexto.arc(estado.x, estado.y, radio, 0, Math.PI * 2);
+  contexto.fill();
+  contexto.stroke();
+
+  if (compuesto || aceptacion) {
+    contexto.strokeStyle = compuesto ? "#2563eb" : "#16a34a";
+    contexto.lineWidth = 2;
+    contexto.beginPath();
+    contexto.arc(estado.x, estado.y, radio - 8, 0, Math.PI * 2);
+    contexto.stroke();
+  }
+
+  if (compuesto) {
+    contexto.setLineDash([4, 5]);
+    contexto.strokeStyle = "rgba(37, 99, 235, 0.55)";
+    contexto.lineWidth = 1.5;
+    contexto.beginPath();
+    contexto.arc(estado.x, estado.y, radio + 9, 0, Math.PI * 2);
+    contexto.stroke();
+    contexto.setLineDash([]);
+  }
+
+  contexto.fillStyle = activo ? "#9a3412" : compuesto ? "#1d4ed8" : "#134e4a";
+  contexto.font = "950 15px Segoe UI";
+  contexto.textAlign = "center";
+  contexto.textBaseline = "middle";
+  contexto.fillText(estado.id, estado.x, estado.y - 19);
+
+  contexto.font = "900 11px Segoe UI";
+  estado.lineas.forEach((linea, indice) => {
+    contexto.fillText(linea, estado.x, estado.y + indice * 14);
+  });
+}
+
+function renderDiagramaMaquina() {
+  ajustarCanvasGenerico(diagramaMaquina, ctxMaquina);
+  const ancho = diagramaMaquina.clientWidth;
+  const alto = diagramaMaquina.clientHeight;
+  ctxMaquina.clearRect(0, 0, ancho, alto);
+
+  const estadoMaquina = productoEntregado
+    ? "reinicio"
+    : saldo > 0
+      ? "dinero"
+      : "espera";
+
+  const centroX = ancho * 0.5;
+  const centroY = alto * 0.54;
+  const margenX = Math.max(92, ancho * 0.13);
+  const arriba = Math.max(120, alto * 0.23);
+  const medio = alto * 0.52;
+  const abajo = Math.min(alto - 118, alto * 0.78);
+
+  const estados = {
+    espera: { id: "qM0", x: margenX, y: medio, r: 58, lineas: ["Esperando", "dinero"], exterior: true },
+    dinero: { id: "qM1", x: centroX, y: arriba, r: 66, lineas: ["Control dinero", "MEF 2"], exterior: true },
+    producto: { id: "qM2", x: ancho - margenX, y: medio, r: 58, lineas: ["Producto", "habilitado"], exterior: true },
+    vuelto: { id: "qM3", x: ancho - margenX * 1.45, y: abajo, r: 60, lineas: ["Entregar", "y vuelto"], exterior: true },
+    reinicio: { id: "qM4", x: margenX * 1.45, y: abajo, r: 54, lineas: ["Reiniciar"], exterior: true }
+  };
+
+  ctxMaquina.fillStyle = "#0f172a";
+  ctxMaquina.font = "900 16px Segoe UI";
+  ctxMaquina.textAlign = "left";
+  ctxMaquina.fillText("MEF 1 principal: control externo de la maquina", 18, 30);
+
+  ctxMaquina.fillStyle = "#475569";
+  ctxMaquina.font = "800 12px Segoe UI";
+  ctxMaquina.fillText("Qm = {qM0, qM1, qM2, qM3, qM4}    qM1 contiene la MEF 2 de dinero", 18, 52);
+
+  ctxMaquina.strokeStyle = "#0ea5e9";
+  ctxMaquina.lineWidth = 3.4;
+  ctxMaquina.lineCap = "round";
+  ctxMaquina.beginPath();
+  ctxMaquina.moveTo(estados.espera.x - 116, estados.espera.y);
+  ctxMaquina.lineTo(estados.espera.x - estados.espera.r - 10, estados.espera.y);
+  ctxMaquina.stroke();
+  ctxMaquina.lineCap = "butt";
+  dibujarPuntaFlecha(ctxMaquina, estados.espera.x - estados.espera.r - 2, estados.espera.y, 0, "#0ea5e9", 21);
+  ctxMaquina.font = "900 12px Segoe UI";
+  ctxMaquina.fillStyle = "#0f766e";
+  ctxMaquina.fillText("inicio", estados.espera.x - 158, estados.espera.y + 4);
+
+  dibujarFlechaContexto(ctxMaquina, estados.espera, estados.dinero, "insertar moneda", "#2563eb", 64);
+  dibujarFlechaContexto(ctxMaquina, estados.dinero, estados.producto, "saldo suficiente", "#16a34a", 64);
+  dibujarFlechaContexto(ctxMaquina, estados.producto, estados.vuelto, "seleccionar producto", "#f97316", 58);
+  dibujarFlechaContexto(ctxMaquina, estados.vuelto, estados.reinicio, "entregar + vuelto", "#0f766e", 72);
+  dibujarFlechaContexto(ctxMaquina, estados.reinicio, estados.espera, "volver a qM0", "#64748b", 58);
+
+  dibujarEstadoMaquina(ctxMaquina, estados.espera, estadoMaquina === "espera");
+  dibujarEstadoMaquina(ctxMaquina, estados.dinero, estadoMaquina === "dinero", true);
+  dibujarEstadoMaquina(ctxMaquina, estados.producto, productosHabilitadosLista(estadoDesdeSaldo(saldo)).length > 0);
+  dibujarEstadoMaquina(ctxMaquina, estados.vuelto, false, false, true);
+  dibujarEstadoMaquina(ctxMaquina, estados.reinicio, estadoMaquina === "reinicio");
+
+  ctxMaquina.fillStyle = "#475569";
+  ctxMaquina.font = "800 12px Segoe UI";
+  ctxMaquina.fillText("Doble circulo = salida aceptada: producto entregado y vuelto calculado.", 18, alto - 24);
+
+  ctxMaquina.textAlign = "left";
+  ctxMaquina.textBaseline = "alphabetic";
+}
+
 function obtenerPuntosEstados() {
   const ancho = diagramaEstados.clientWidth;
   const alto = diagramaEstados.clientHeight;
-  const layout = [
-    { x: 0.1, y: 0.52 },
-    { x: 0.28, y: 0.25 },
-    { x: 0.28, y: 0.78 },
-    { x: 0.48, y: 0.52 },
-    { x: 0.68, y: 0.25 },
-    { x: 0.68, y: 0.78 },
-    { x: 0.9, y: 0.52 }
-  ];
+  const total = maxPrecio() + 1;
+  const centroX = ancho * 0.5;
+  const centroY = alto * 0.55;
+  const radio = Math.min(ancho * 0.34, alto * 0.34);
 
-  return Array.from({ length: maxPrecio() + 1 }, (_, indice) => {
-    const punto = layout[indice] || {
-      x: 0.12 + (indice / maxPrecio()) * 0.76,
-      y: indice % 2 === 0 ? 0.35 : 0.68
-    };
+  return Array.from({ length: total }, (_, indice) => {
+    const angulo = -Math.PI / 2 + (Math.PI * 2 * indice) / total;
 
     return {
       id: indice,
-      x: ancho * punto.x,
-      y: alto * punto.y
+      x: centroX + Math.cos(angulo) * radio,
+      y: centroY + Math.sin(angulo) * radio,
+      angulo
     };
   });
 }
 
-function dibujarFlecha(origen, destino, etiqueta, color, curvatura = 0, etiquetaAbajo = false) {
+function dibujarFlecha(origen, destino, etiqueta, color, curvatura = 0, etiquetaAbajo = false, exterior = false) {
   const dx = destino.x - origen.x;
   const dy = destino.y - origen.y;
   const distancia = Math.hypot(dx, dy) || 1;
@@ -271,45 +583,59 @@ function dibujarFlecha(origen, destino, etiqueta, color, curvatura = 0, etiqueta
   const radioNodo = 24;
   const inicioX = origen.x + nx * radioNodo;
   const inicioY = origen.y + ny * radioNodo;
-  const finX = destino.x - nx * radioNodo;
-  const finY = destino.y - ny * radioNodo;
-  const controlX = (inicioX + finX) / 2 - ny * curvatura;
-  const controlY = (inicioY + finY) / 2 + nx * curvatura;
+  const finX = destino.x - nx * (radioNodo + 8);
+  const finY = destino.y - ny * (radioNodo + 8);
+  let controlX = (inicioX + finX) / 2 - ny * curvatura;
+  let controlY = (inicioY + finY) / 2 + nx * curvatura;
+
+  if (exterior) {
+    const centroX = diagramaEstados.clientWidth * 0.5;
+    const centroY = diagramaEstados.clientHeight * 0.55;
+    const medioX = (inicioX + finX) / 2;
+    const medioY = (inicioY + finY) / 2;
+    const vx = medioX - centroX;
+    const vy = medioY - centroY;
+    const magnitud = Math.hypot(vx, vy) || 1;
+    controlX = medioX + (vx / magnitud) * Math.abs(curvatura);
+    controlY = medioY + (vy / magnitud) * Math.abs(curvatura);
+  }
 
   ctx.strokeStyle = color;
-  ctx.lineWidth = 2.4;
+  ctx.lineWidth = grupoActivaColor(color) ? 4.5 : 3.4;
+  ctx.lineCap = "round";
   ctx.beginPath();
   ctx.moveTo(inicioX, inicioY);
   ctx.quadraticCurveTo(controlX, controlY, finX, finY);
   ctx.stroke();
+  ctx.lineCap = "butt";
 
-  const angulo = Math.atan2(finY - controlY, finX - controlX);
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(finX, finY);
-  ctx.lineTo(finX - 11 * Math.cos(angulo - Math.PI / 6), finY - 11 * Math.sin(angulo - Math.PI / 6));
-  ctx.lineTo(finX - 11 * Math.cos(angulo + Math.PI / 6), finY - 11 * Math.sin(angulo + Math.PI / 6));
-  ctx.closePath();
-  ctx.fill();
+  dibujarPuntaFlecha(ctx, finX, finY, Math.atan2(finY - controlY, finX - controlX), color, 20);
 
-  ctx.font = "800 12px Segoe UI";
+  ctx.font = "900 13px Segoe UI";
   const textoX = controlX - ctx.measureText(etiqueta).width / 2;
   const textoY = controlY + (etiquetaAbajo ? 20 : -8);
-  const anchoTexto = ctx.measureText(etiqueta).width + 12;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+  const anchoTexto = ctx.measureText(etiqueta).width + 18;
+  ctx.fillStyle = "rgba(255, 255, 255, 0.96)";
   ctx.beginPath();
-  ctx.roundRect(textoX - 6, textoY - 15, anchoTexto, 22, 7);
+  ctx.roundRect(textoX - 9, textoY - 18, anchoTexto, 26, 9);
   ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
   ctx.fillStyle = "#334155";
   ctx.fillText(etiqueta, textoX, textoY);
 }
 
+function grupoActivaColor(color) {
+  return color === "#f97316";
+}
+
 function dibujarBucle(punto, etiqueta, color, indice) {
-  const desplazamiento = indice % 2 === 0 ? -46 : 46;
+  const desplazamiento = punto.x < diagramaEstados.clientWidth / 2 ? -56 : 56;
   ctx.strokeStyle = color;
-  ctx.lineWidth = 2.4;
+  ctx.lineWidth = 3.4;
   ctx.beginPath();
-  ctx.ellipse(punto.x + desplazamiento, punto.y - 36, 28, 20, 0, 0, Math.PI * 2);
+  ctx.ellipse(punto.x + desplazamiento, punto.y - 38, 34, 24, 0, 0, Math.PI * 2);
   ctx.stroke();
 
   ctx.fillStyle = color;
@@ -322,14 +648,14 @@ function dibujarBucle(punto, etiqueta, color, indice) {
 
   ctx.font = "700 12px Segoe UI";
   ctx.fillStyle = "#334155";
-  ctx.fillText(etiqueta, punto.x + desplazamiento - 18, punto.y - 62);
+  ctx.fillText(etiqueta, punto.x + desplazamiento - 24, punto.y - 70);
 }
 
 function obtenerTransicionesAgrupadas() {
   const grupos = new Map();
 
   for (let estado = 0; estado <= maxPrecio(); estado += 1) {
-    for (const moneda of monedas) {
+    monedas.forEach((moneda) => {
       const destino = calcularTransicion(estado, moneda).nuevoEstado;
       const clave = `${estado}-${destino}`;
 
@@ -344,6 +670,7 @@ function obtenerTransicionesAgrupadas() {
 
       const grupo = grupos.get(clave);
       grupo.monedas.push(moneda);
+
       if (
         transicionActiva
         && transicionActiva.estado === estado
@@ -351,20 +678,243 @@ function obtenerTransicionesAgrupadas() {
       ) {
         grupo.activa = true;
       }
-    }
+    });
   }
 
   return Array.from(grupos.values());
 }
 
-function curvaturaParaArista(origen, destino, indice) {
-  if (origen.id === destino.id) return 0;
+function dibujarArcoCircular(grupo, puntos, color, indice) {
+  const origen = puntos[grupo.origen];
+  const destino = puntos[grupo.destino];
 
-  const distancia = Math.abs(destino.id - origen.id);
-  const sube = destino.y < origen.y;
-  const casiHorizontal = Math.abs(destino.y - origen.y) < 16;
-  const signo = casiHorizontal ? (origen.id % 2 === 0 ? -1 : 1) : sube ? -1 : 1;
-  return signo * (34 + distancia * 11 + (indice % 3) * 8);
+  if (grupo.origen === grupo.destino) {
+    dibujarBucle(origen, grupo.monedas.map((moneda) => `S/${moneda}`).join(", "), color, indice);
+    return;
+  }
+
+  const centroX = diagramaEstados.clientWidth * 0.5;
+  const centroY = diagramaEstados.clientHeight * 0.55;
+  const baseRadio = Math.hypot(origen.x - centroX, origen.y - centroY);
+  const monedaMayor = Math.max(...grupo.monedas);
+  const carrilMoneda = monedaMayor === 1 ? 34 : monedaMayor === 2 ? 74 : 122;
+  const carrilOrigen = (grupo.origen % 3) * 9;
+  const radioArco = baseRadio + carrilMoneda + carrilOrigen;
+  const anguloInicio = origen.angulo;
+  let anguloFin = destino.angulo;
+
+  while (anguloFin <= anguloInicio) {
+    anguloFin += Math.PI * 2;
+  }
+
+  const margen = 0.12;
+  const inicio = anguloInicio + margen;
+  const fin = anguloFin - margen;
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = grupo.activa ? 4.8 : 3.2;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.arc(centroX, centroY, radioArco, inicio, fin);
+  ctx.stroke();
+  ctx.lineCap = "butt";
+
+  const puntaX = centroX + Math.cos(fin) * radioArco;
+  const puntaY = centroY + Math.sin(fin) * radioArco;
+  dibujarPuntaFlecha(ctx, puntaX, puntaY, fin + Math.PI / 2, color, grupo.activa ? 22 : 19);
+
+  const medio = (inicio + fin) / 2;
+  const etiqueta = grupo.monedas.map((moneda) => `S/${moneda}`).join(", ");
+  const etiquetaRadio = radioArco + 18;
+  const textoX = centroX + Math.cos(medio) * etiquetaRadio;
+  const textoY = centroY + Math.sin(medio) * etiquetaRadio;
+  const anchoTexto = ctx.measureText(etiqueta).width + 18;
+
+  ctx.font = "900 13px Segoe UI";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.96)";
+  ctx.beginPath();
+  ctx.roundRect(textoX - anchoTexto / 2, textoY - 15, anchoTexto, 26, 9);
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.fillStyle = "#334155";
+  ctx.fillText(etiqueta, textoX - ctx.measureText(etiqueta).width / 2, textoY + 3);
+}
+
+function dibujarNodoDinero(x, y, estado, activo = false) {
+  const productosDelEstado = productosHabilitadosLista(estado);
+  const suficiente = productosDelEstado.length > 0;
+  const radio = suficiente ? 27 : 24;
+
+  if (suficiente) {
+    ctx.fillStyle = "#ecfdf5";
+    ctx.strokeStyle = "#16a34a";
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.arc(x, y, radio + 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = activo ? "#fef3c7" : suficiente ? "#dcfce7" : "#ffffff";
+  ctx.strokeStyle = activo ? "#f97316" : suficiente ? "#16a34a" : "#0f766e";
+  ctx.lineWidth = activo ? 4 : 2.5;
+  ctx.beginPath();
+  ctx.arc(x, y, radio, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = activo ? "#9a3412" : "#134e4a";
+  ctx.font = "900 14px Segoe UI";
+  ctx.fillText(`q${estado}`, x, y - 7);
+  ctx.font = "800 10px Segoe UI";
+  ctx.fillStyle = "#64748b";
+  ctx.fillText(`S/${estado}`, x, y + 9);
+}
+
+function dibujarLineaDirigida(x1, y1, x2, y2, etiqueta, color, activa = false, curva = 0, etiquetaOffset = 0) {
+  const angulo = Math.atan2(y2 - y1, x2 - x1);
+  const inicioX = x1 + Math.cos(angulo) * 31;
+  const inicioY = y1 + Math.sin(angulo) * 31;
+  const finX = x2 - Math.cos(angulo) * 34;
+  const finY = y2 - Math.sin(angulo) * 34;
+  const medioX = (inicioX + finX) / 2;
+  const medioY = (inicioY + finY) / 2;
+  const normalX = -Math.sin(angulo);
+  const normalY = Math.cos(angulo);
+  const controlX = medioX + normalX * curva;
+  const controlY = medioY + normalY * curva;
+  const etiquetaX = controlX + normalX * etiquetaOffset;
+  const etiquetaY = controlY + normalY * etiquetaOffset;
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = activa ? 4.8 : 3.2;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(inicioX, inicioY);
+  ctx.quadraticCurveTo(controlX, controlY, finX, finY);
+  ctx.stroke();
+  ctx.lineCap = "butt";
+  dibujarPuntaFlecha(ctx, finX, finY, Math.atan2(finY - controlY, finX - controlX), color, activa ? 22 : 19);
+
+  if (!etiqueta) return;
+
+  ctx.font = "900 12px Segoe UI";
+  const anchoTexto = ctx.measureText(etiqueta).width + 16;
+  ctx.fillStyle = "rgba(255, 255, 255, 0.96)";
+  ctx.beginPath();
+  ctx.roundRect(etiquetaX - anchoTexto / 2, etiquetaY - 24, anchoTexto, 24, 8);
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+  ctx.fillStyle = "#334155";
+  ctx.fillText(etiqueta, etiquetaX - ctx.measureText(etiqueta).width / 2, etiquetaY - 7);
+}
+
+function dibujarBucleNodo(x, y, etiqueta, color, activa = false) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = activa ? 4.8 : 3.2;
+  ctx.beginPath();
+  ctx.ellipse(x + 48, y - 28, 32, 22, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  dibujarPuntaFlecha(ctx, x + 73, y - 15, Math.PI * 0.2, color, activa ? 22 : 19);
+
+  if (!etiqueta) return;
+
+  ctx.font = "900 12px Segoe UI";
+  ctx.fillStyle = "#334155";
+  ctx.fillText(etiqueta, x + 24, y - 58);
+}
+
+function dibujarPanelMoneda(titulo, moneda, x, y, ancho, alto) {
+  ctx.fillStyle = "rgba(248, 250, 252, 0.9)";
+  ctx.strokeStyle = "#dbe3ee";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(x, y, ancho, alto, 12);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = moneda === 1 ? "#2563eb" : moneda === 2 ? "#7c3aed" : "#0f766e";
+  ctx.font = "900 15px Segoe UI";
+  ctx.textAlign = "left";
+  ctx.fillText(titulo, x + 16, y + 28);
+
+  const estados = Array.from({ length: maxPrecio() + 1 }, (_, estado) => estado);
+  const puntos = new Map();
+  const estadoActualDiagrama = estadoDesdeSaldo(saldo);
+
+  if (moneda === 5) {
+    const destinoX = x + ancho - 82;
+    const destinoY = y + alto / 2;
+    puntos.set(6, { x: destinoX, y: destinoY });
+
+    estados.slice(0, 6).forEach((estado, indice) => {
+      const px = x + 84;
+      const py = y + 66 + indice * ((alto - 120) / 5);
+      puntos.set(estado, { x: px, y: py });
+    });
+  } else {
+    estados.forEach((estado, indice) => {
+      const px = x + 64 + indice * ((ancho - 128) / 6);
+      const py = y + alto * 0.58;
+      puntos.set(estado, { x: px, y: py });
+    });
+  }
+
+  estados.forEach((estado) => {
+    const destino = calcularTransicion(estado, moneda).nuevoEstado;
+    const origenPunto = puntos.get(estado);
+    const destinoPunto = puntos.get(destino);
+    const activa = transicionActiva
+      && transicionActiva.estado === estado
+      && transicionActiva.moneda === moneda;
+    const destinoAcepta = productosHabilitadosLista(destino).length > 0;
+    const color = activa ? "#f97316" : destinoAcepta ? "#16a34a" : moneda === 1 ? "#2563eb" : moneda === 2 ? "#7c3aed" : "#0f766e";
+
+    if (estado === destino) {
+      dibujarBucleNodo(origenPunto.x, origenPunto.y, `S/${moneda}`, color, activa);
+    } else {
+      dibujarLineaDirigida(origenPunto.x, origenPunto.y, destinoPunto.x, destinoPunto.y, `S/${moneda}`, color, activa);
+    }
+  });
+
+  estados.forEach((estado) => {
+    const punto = puntos.get(estado);
+    dibujarNodoDinero(punto.x, punto.y, estado, estado === estadoActualDiagrama);
+  });
+}
+
+function estadoControlDinero(valor) {
+  if (valor <= 0) return "sin";
+  if (valor <= 2) return "insuficiente";
+  if (valor <= 4) return "mini";
+  if (valor === 5) return "bebida";
+  return "completo";
+}
+
+function dibujarEstadoNivel(estado, activo = false) {
+  const { x, y, w, h, titulo, subtitulo, color } = estado;
+  ctx.fillStyle = activo ? "#fef3c7" : "#ffffff";
+  ctx.strokeStyle = activo ? "#f97316" : color;
+  ctx.lineWidth = activo ? 4 : 2.6;
+  ctx.beginPath();
+  ctx.roundRect(x - w / 2, y - h / 2, w, h, 14);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = color;
+  ctx.font = "900 14px Segoe UI";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(titulo, x, y - 10);
+  ctx.fillStyle = "#64748b";
+  ctx.font = "800 11px Segoe UI";
+  ctx.fillText(subtitulo, x, y + 12);
 }
 
 function renderDiagrama() {
@@ -373,12 +923,12 @@ function renderDiagrama() {
   const alto = diagramaEstados.clientHeight;
   ctx.clearRect(0, 0, ancho, alto);
 
-  const puntos = obtenerPuntosEstados();
   const estadoActualDiagrama = estadoDesdeSaldo(saldo);
 
   ctx.fillStyle = "#0f172a";
-  ctx.font = "900 17px Segoe UI";
-  ctx.fillText("Diagrama de estados de la maquina expendedora", 22, 34);
+  ctx.font = "900 18px Segoe UI";
+  ctx.textAlign = "left";
+  ctx.fillText("MEF 2: Control de dinero ingresado", 22, 34);
 
   const leyendas = [
     { texto: "Estado normal", color: "#0f766e" },
@@ -386,48 +936,139 @@ function renderDiagrama() {
     { texto: "Producto desbloqueado", color: "#16a34a" }
   ];
   leyendas.forEach((item, indice) => {
-    const x = 22 + indice * 190;
+    const lx = 22 + indice * 190;
     ctx.fillStyle = item.color;
     ctx.beginPath();
-    ctx.arc(x, 62, 7, 0, Math.PI * 2);
+    ctx.arc(lx, 62, 7, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = "#475569";
     ctx.font = "800 12px Segoe UI";
-    ctx.fillText(item.texto, x + 13, 66);
+    ctx.fillText(item.texto, lx + 13, 66);
   });
 
-  ctx.strokeStyle = "#0ea5e9";
-  ctx.lineWidth = 2.4;
+  const margenX = Math.max(90, ancho * 0.09);
+  const baseY = alto * 0.57;
+  const espacioX = (ancho - margenX * 2) / 6;
+  const puntos = Array.from({ length: 7 }, (_, estado) => ({
+    id: estado,
+    x: margenX + estado * espacioX,
+    y: baseY
+  }));
+
+  ctx.fillStyle = "rgba(248, 250, 252, 0.92)";
+  ctx.strokeStyle = "#dbe3ee";
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(24, puntos[0].y);
-  ctx.lineTo(puntos[0].x - 35, puntos[0].y);
-  ctx.stroke();
-  ctx.fillStyle = "#0ea5e9";
-  ctx.beginPath();
-  ctx.moveTo(puntos[0].x - 30, puntos[0].y);
-  ctx.lineTo(puntos[0].x - 43, puntos[0].y - 7);
-  ctx.lineTo(puntos[0].x - 43, puntos[0].y + 7);
-  ctx.closePath();
+  ctx.roundRect(22, 92, ancho - 44, alto - 132, 12);
   ctx.fill();
+  ctx.stroke();
 
-  obtenerTransicionesAgrupadas().forEach((grupo, indice) => {
-    const origen = puntos[grupo.origen];
-    const destino = puntos[grupo.destino];
-    const etiqueta = grupo.monedas.map((moneda) => `S/${moneda}`).join(", ");
-    const destinoAcepta = productosHabilitadosLista(grupo.destino).length > 0;
-    const color = grupo.activa ? "#f97316" : destinoAcepta ? "#16a34a" : "#2563eb";
-    const etiquetaAbajo = destino.y >= origen.y;
+  const leyendaMonedas = monedas.map((moneda) => ({
+    texto: `${estiloMoneda(moneda).color === "#2563eb" ? "Azul" : "Color"} = moneda S/${moneda}`,
+    color: estiloMoneda(moneda).color,
+    moneda
+  }));
+  leyendaMonedas.push({ texto: "Naranja = transicion actual", color: "#f97316" });
+  const columnasLeyenda = leyendaMonedas.length > 5 ? 2 : 1;
+  const filasLeyenda = Math.ceil(leyendaMonedas.length / columnasLeyenda);
+  const leyendaAncho = columnasLeyenda === 2 ? 430 : 252;
+  const leyendaAlto = 24 + filasLeyenda * 18;
+  const leyendaX = Math.max(42, ancho - leyendaAncho - 28);
+  const leyendaY = 110;
+  ctx.fillStyle = "rgba(255, 255, 255, 0.96)";
+  ctx.strokeStyle = "#dbe3ee";
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.roundRect(leyendaX, leyendaY, leyendaAncho, leyendaAlto, 10);
+  ctx.fill();
+  ctx.stroke();
+  leyendaMonedas.forEach((item, indice) => {
+    const columna = columnasLeyenda === 2 && indice >= filasLeyenda ? 1 : 0;
+    const fila = columnasLeyenda === 2 ? indice % filasLeyenda : indice;
+    const xBase = leyendaX + 14 + columna * 206;
+    const y = leyendaY + 23 + fila * 18;
+    ctx.strokeStyle = item.color;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(xBase, y - 4);
+    ctx.lineTo(xBase + 28, y - 4);
+    ctx.stroke();
+    dibujarPuntaFlecha(ctx, xBase + 31, y - 4, 0, item.color, 11);
+    ctx.fillStyle = "#334155";
+    ctx.font = "800 12px Segoe UI";
+    const texto = item.moneda ? `Moneda S/${item.moneda}` : item.texto;
+    ctx.fillText(texto, xBase + 44, y);
+  });
 
-    if (grupo.origen === grupo.destino) {
-      dibujarBucle(origen, etiqueta, color, indice);
-    } else {
-      dibujarFlecha(
+  ctx.strokeStyle = "rgba(15, 118, 110, 0.16)";
+  ctx.lineWidth = 8;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(puntos[0].x, baseY);
+  ctx.lineTo(puntos[6].x, baseY);
+  ctx.stroke();
+  ctx.lineCap = "butt";
+
+  ctx.strokeStyle = "#0ea5e9";
+  ctx.lineWidth = 3.4;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(puntos[0].x - 78, puntos[0].y);
+  ctx.lineTo(puntos[0].x - 38, puntos[0].y);
+  ctx.stroke();
+  ctx.lineCap = "butt";
+  dibujarPuntaFlecha(ctx, puntos[0].x - 32, puntos[0].y, 0, "#0ea5e9", 21);
+  ctx.font = "900 12px Segoe UI";
+  ctx.fillStyle = "#0f766e";
+  ctx.fillText("inicio", puntos[0].x - 118, puntos[0].y + 4);
+
+  function dibujarTransicionSimple(origen, destino, etiqueta, color, curva, activa = false, etiquetaOffset = 0) {
+    const p1 = puntos[origen];
+    const p2 = puntos[destino];
+    dibujarLineaDirigida(p1.x, p1.y, p2.x, p2.y, etiqueta, color, activa, curva, etiquetaOffset);
+  }
+
+  const transicionesPrincipales = [];
+
+  for (let origen = 0; origen <= maxPrecio(); origen += 1) {
+    monedas.forEach((moneda) => {
+      const destino = calcularTransicion(origen, moneda).nuevoEstado;
+      const estilo = estiloMoneda(moneda);
+      transicionesPrincipales.push({
         origen,
         destino,
-        etiqueta,
-        color,
-        curvaturaParaArista(origen, destino, indice),
-        etiquetaAbajo
+        etiqueta: "",
+        color: estilo.color,
+        curva: origen === destino ? 0 : estilo.curva,
+        offset: estilo.offset,
+        moneda
+      });
+    });
+  }
+
+  transicionesPrincipales.forEach((transicion) => {
+    const activa = transicionActiva && (
+      transicionActiva
+      && transicionActiva.estado === transicion.origen
+      && transicionActiva.moneda === transicion.moneda
+    );
+    if (transicion.origen === transicion.destino) {
+      dibujarBucleNodo(
+        puntos[transicion.origen].x,
+        puntos[transicion.origen].y,
+        "",
+        activa ? "#f97316" : transicion.color,
+        activa
+      );
+    } else {
+      dibujarTransicionSimple(
+        transicion.origen,
+        transicion.destino,
+        transicion.etiqueta,
+        activa ? "#f97316" : transicion.color,
+        transicion.curva,
+        activa,
+        transicion.offset
       );
     }
   });
@@ -480,14 +1121,22 @@ function renderDiagrama() {
   });
 
   ctx.textAlign = "left";
+  ctx.fillStyle = "#475569";
+  ctx.font = "800 13px Segoe UI";
+  ctx.fillText("Grafo de lectura: muestra las transiciones principales. La matriz inferior muestra delta completa.", 40, alto - 48);
+
+  ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
 }
 
 function actualizarPantalla({ moneda = "-", producto = null, vuelto = 0, mensaje = "" } = {}) {
   const estadoVisible = estadoDesdeSaldo(saldo);
   saldoPantalla.textContent = saldo;
-  estadoActual.textContent = `Estado actual: q${estadoVisible}${saldo > maxPrecio() ? ` (saldo real ${saldo})` : ""}`;
-  productoEtiqueta.textContent = producto ? producto.nombre : "Elige un producto";
+  estadoActual.textContent = `Estado q${estadoVisible} | Saldo real S/${saldo}`;
+  const etiquetaActual = productoVisual.querySelector("span");
+  if (etiquetaActual && !producto) {
+    etiquetaActual.textContent = "Elige un producto";
+  }
   ultimaEntrada.textContent = moneda;
   salidaProducto.textContent = producto ? producto.nombre : "No";
   salidaVuelto.textContent = vuelto;
@@ -500,6 +1149,7 @@ function insertarMoneda(moneda) {
   saldo += moneda;
   transicionActiva = { estado: estadoAnterior, moneda };
   productoEntregado = null;
+  limpiarSalidaVisual();
 
   const disponibles = productos.filter((producto) => saldo >= producto.precio);
   const mensaje = disponibles.length
@@ -507,6 +1157,8 @@ function insertarMoneda(moneda) {
     : `Se recibio ${moneda}. Aun falta dinero para desbloquear productos.`;
 
   actualizarPantalla({ moneda, mensaje });
+  animarInsercionMoneda(moneda);
+  renderDiagramaMaquina();
   renderDiagrama();
 }
 
@@ -526,7 +1178,9 @@ function comprarProducto(producto) {
     vuelto,
     mensaje: `Producto entregado: ${producto.nombre}. Vuelto: ${vuelto}. La maquina vuelve a q0.`
   });
+  animarEntrega(producto, vuelto);
   mostrarToast(`Salio ${producto.nombre}. Vuelto: ${vuelto}.`);
+  renderDiagramaMaquina();
   renderDiagrama();
 }
 
@@ -543,12 +1197,14 @@ function actualizarMaquina() {
   saldo = 0;
   productoEntregado = null;
   transicionActiva = null;
+  limpiarSalidaVisual();
 
   renderBotonesMonedas();
   actualizarElementosFormales();
   renderTablaTransiciones();
   renderCaminosCortos();
   actualizarPantalla({ mensaje: "Maquina actualizada. Inserta dinero y luego elige producto." });
+  renderDiagramaMaquina();
   renderDiagrama();
 }
 
@@ -557,10 +1213,15 @@ reiniciarMaquinaBtn.addEventListener("click", () => {
   saldo = 0;
   productoEntregado = null;
   transicionActiva = null;
+  limpiarSalidaVisual();
   actualizarPantalla({ mensaje: "Compra reiniciada. La maquina vuelve a q0." });
+  renderDiagramaMaquina();
   renderDiagrama();
 });
 
-window.addEventListener("resize", renderDiagrama);
+window.addEventListener("resize", () => {
+  renderDiagramaMaquina();
+  renderDiagrama();
+});
 
 actualizarMaquina();
