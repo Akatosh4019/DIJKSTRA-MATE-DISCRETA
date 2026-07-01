@@ -21,7 +21,7 @@
       <div class="digital-vending-machine">
         <div class="machine-brand">
           <span>VEND-O-MATIC</span>
-          <strong>Bebidas S/5 | Snacks S/6 | Minis S/3</strong>
+          <strong>Monedas: 10c, 20c, 50c, S/1, S/2 y S/5</strong>
         </div>
 
         <div class="machine-front">
@@ -75,12 +75,13 @@
                   <span class="empty-change">Vuelto aqui</span>
                 </div>
               </div>
+              <button class="pickup-button" id="recogerProducto" type="button" disabled>Recoger producto</button>
             </div>
 
             <details class="machine-settings">
               <summary>Configurar monedas</summary>
               <label for="monedas">Simbolos de entrada</label>
-              <input id="monedas" type="text" value="1,2,5" placeholder="Ejemplo: 1,2,3,5,10">
+              <input id="monedas" type="text" value="0.10,0.20,0.50,1,2,5" placeholder="Ejemplo: 0.10,0.20,0.50,1,2,5">
               <button class="primary" id="actualizarMaquina" type="button">Actualizar</button>
               <button class="danger" id="reiniciarMaquina" type="button">Reiniciar</button>
             </details>
@@ -93,9 +94,10 @@
       <span>Funcionamiento</span>
       <h2>Primero dinero, luego producto</h2>
       <p>
-        La maquina recibe monedas y acumula saldo. Con S/3 se desbloquean snacks mini, con S/5
-        se desbloquean bebidas y con S/6 se desbloquean snacks completos. Cuando eliges un
-        producto habilitado, la maquina entrega el producto, calcula el vuelto y regresa al estado inicial.
+        La maquina recibe monedas reales del Peru y acumula saldo en centimos. Los productos tienen
+        precios enteros y decimales; cuando el saldo alcanza el precio, ese estado se convierte en estado
+        de aceptacion para esa salida. Al elegir un producto habilitado, entrega producto y calcula vuelto;
+        la compra termina cuando el usuario recoge el producto y la maquina vuelve a q0.
       </p>
     </section>
 
@@ -103,9 +105,9 @@
       <header>
         <div>
           <span>Modelo separado</span>
-          <h2>Dos MEF conectadas</h2>
+          <h2>Tres MEF conectadas</h2>
         </div>
-        <p>La MEF principal contiene el estado Control de dinero ingresado; su detalle interno se visualiza como otra MEF.</p>
+        <p>La MEF principal contiene el control de dinero y el control de recojo; ambos se visualizan como MEF separadas.</p>
       </header>
       <div class="mef-grid">
         <article class="mef-card">
@@ -122,6 +124,13 @@
           </div>
           <canvas id="diagramaEstados"></canvas>
         </article>
+        <article class="mef-card">
+          <div class="mef-card-header">
+            <span>MEF 3</span>
+            <h3>Control de retiro del producto</h3>
+          </div>
+          <canvas id="diagramaRecojo"></canvas>
+        </article>
       </div>
     </section>
 
@@ -129,9 +138,9 @@
       <header>
         <div>
           <span>Lectura del modelo</span>
-          <h2>Como se conectan las dos MEF</h2>
+          <h2>Como se conectan las tres MEF</h2>
         </div>
-        <p>El estado Control de dinero ingresado de la MEF 1 se detalla en la MEF 2, donde viven q0 hasta q6.</p>
+        <p>La MEF 1 dirige el flujo general; la MEF 2 calcula el saldo y la MEF 3 confirma que el producto fue recogido.</p>
       </header>
       <div class="mef-explain-grid">
         <div>
@@ -140,7 +149,11 @@
         </div>
         <div>
           <strong>MEF 2 calcula el saldo</strong>
-          <p>Cada moneda cambia el estado interno de dinero. q3 habilita minis, q5 bebidas y q6 snacks completos.</p>
+          <p>Cada moneda cambia el estado interno de dinero. Por ejemplo, q350 representa S/3.50 y puede ser estado de aceptacion para productos de ese precio.</p>
+        </div>
+        <div>
+          <strong>MEF 3 confirma el recojo</strong>
+          <p>Cuando el producto cae, la maquina espera que el usuario lo recoja. Al recogerlo llega al estado de aceptacion y vuelve a esperar dinero.</p>
         </div>
       </div>
     </section>
@@ -151,7 +164,7 @@
           <span>Caminos cortos</span>
           <h2>Ruta minima para desbloquear productos</h2>
         </div>
-        <p>Desde q0 se calcula la menor cantidad de monedas necesaria para llegar al estado de compra.</p>
+        <p>Desde q0 se calcula la menor cantidad de monedas necesaria para llegar a cada precio de producto.</p>
       </header>
       <div class="shortest-grid" id="tablaCaminosCortos"></div>
     </section>
@@ -162,11 +175,22 @@
           <span>Cuadro de doble entrada</span>
           <h2>Tabla de estado y funcion de transicion</h2>
         </div>
-        <p>Filas = estados. Columnas = simbolos de entrada. Cada celda muestra el nuevo estado.</p>
+        <p>Filas = estados. Columnas = simbolos de entrada. Las celdas marcadas indican estados de aceptacion/salida.</p>
       </header>
       <div class="transition-table-wrap">
         <table id="tablaTransiciones"></table>
       </div>
+    </section>
+
+    <section class="transition-section">
+      <header>
+        <div>
+          <span>Tablas por producto</span>
+          <h2>Estados de aceptacion</h2>
+        </div>
+        <p>Cada producto tiene su propia tabla: la flecha marca q0 y el simbolo ◎ marca los estados donde ese producto queda habilitado.</p>
+      </header>
+      <div class="acceptance-grid" id="tablasAceptacion"></div>
     </section>
 
     <section class="formal-section">

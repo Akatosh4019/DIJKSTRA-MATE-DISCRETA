@@ -2330,6 +2330,31 @@ td:nth-child(2) {
   background: rgba(249, 115, 22, 0.28);
 }
 
+.pickup-button {
+  grid-column: 1 / -1;
+  height: 42px;
+  margin: 4px 0 0;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.3), transparent 3rem),
+    linear-gradient(135deg, #16a34a, #0f766e);
+  box-shadow:
+    0 12px 24px rgba(15, 118, 110, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.pickup-button:disabled {
+  cursor: not-allowed;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.58);
+  box-shadow: inset 0 0 18px rgba(2, 6, 23, 0.28);
+  opacity: 0.72;
+}
+
+.pickup-button:not(:disabled) {
+  animation: pickupGlow 1.4s ease-in-out infinite;
+}
+
 .vending-layout {
   display: grid;
   grid-template-columns: 350px minmax(0, 1fr);
@@ -2965,6 +2990,137 @@ td:nth-child(2) {
   color: #9a3412;
 }
 
+.acceptance-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.acceptance-card {
+  min-width: 0;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+}
+
+.acceptance-card header {
+  display: block;
+  min-height: auto;
+  margin: 0;
+  padding: 14px;
+  color: #0f172a;
+  background:
+    radial-gradient(circle at top right, rgba(22, 163, 74, 0.16), transparent 10rem),
+    linear-gradient(135deg, #f8fafc, #ecfdf5);
+}
+
+.acceptance-card header span {
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.acceptance-card h3 {
+  margin: 5px 0 0;
+  font-size: 20px;
+}
+
+.acceptance-card p {
+  max-width: none;
+  margin-top: 5px;
+  color: #64748b;
+  text-align: left;
+}
+
+.acceptance-table-wrap {
+  max-height: 360px;
+  overflow: auto;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.acceptance-card table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  border: 2px solid #38bdf8;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.acceptance-card th,
+.acceptance-card td {
+  padding: 9px 10px;
+  border-top: 1px solid #bae6fd;
+  border-right: 1px solid #bae6fd;
+  font-size: 13px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.acceptance-card th {
+  color: #0369a1;
+  background: #e0f2fe;
+  white-space: nowrap;
+}
+
+.acceptance-card thead tr:first-child th {
+  color: #0284c7;
+  background: #f0f9ff;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.acceptance-card th small {
+  display: block;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.acceptance-card td small {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 10px;
+}
+
+.acceptance-card tbody th {
+  color: #0f172a;
+  background: #ffffff;
+}
+
+.acceptance-card .marker-head {
+  width: 36px;
+  min-width: 36px;
+  background: #ffffff;
+  border-top-color: transparent;
+  border-right-color: transparent;
+}
+
+.acceptance-card .state-marker {
+  width: 36px;
+  min-width: 36px;
+  border-right: none;
+  color: #0f766e;
+  background: #ffffff;
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.acceptance-card .accept-row th {
+  background: #fef3c7;
+}
+
+.acceptance-card .accept-cell {
+  color: #166534;
+  background: #dcfce7;
+  box-shadow: inset 0 0 0 2px #86efac;
+  font-weight: 950;
+}
+
 @keyframes floatIn {
   from {
     opacity: 0;
@@ -3134,6 +3290,20 @@ td:nth-child(2) {
   }
 }
 
+@keyframes pickupGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 12px 24px rgba(15, 118, 110, 0.24),
+      0 0 0 0 rgba(34, 197, 94, 0);
+  }
+  50% {
+    box-shadow:
+      0 16px 30px rgba(15, 118, 110, 0.3),
+      0 0 0 4px rgba(34, 197, 94, 0.18);
+  }
+}
+
 @media (max-width: 980px) {
   .algorithm-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3223,7 +3393,8 @@ td:nth-child(2) {
   }
 
   .mef-grid,
-  .mef-explain-grid {
+  .mef-explain-grid,
+  .acceptance-grid {
     grid-template-columns: 1fr;
   }
 }
