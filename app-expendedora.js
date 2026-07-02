@@ -25,6 +25,7 @@ const tablaMefPrincipal = document.getElementById("tablaMefPrincipal");
 const tablaMefDinero = document.getElementById("tablaMefDinero");
 const tablaMefRecojo = document.getElementById("tablaMefRecojo");
 const tablasAceptacion = document.getElementById("tablasAceptacion");
+const mefsInternosDinero = document.getElementById("mefsInternosDinero");
 const toast = document.getElementById("toast");
 
 const ctx = diagramaEstados.getContext("2d");
@@ -152,6 +153,7 @@ function reiniciarCicloCompra(mensaje = "La maquina vuelve a q0 y espera dinero.
   renderDiagramaMaquina();
   renderDiagrama();
   renderDiagramaRecojo();
+  renderMefsInternosDinero();
 }
 
 function descomponerVuelto(vuelto) {
@@ -581,6 +583,155 @@ function renderCaminosCortos() {
       <small>Entradas: ${rutaMonedas} | ${camino.monedasUsadas.length} moneda(s)</small>
     `;
     tablaCaminosCortos.appendChild(tarjeta);
+  });
+}
+
+function ajustarCanvasMini(canvas, contexto) {
+  const rect = canvas.getBoundingClientRect();
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+  canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+  contexto.setTransform(ratio, 0, 0, ratio, 0, 0);
+}
+
+function dibujarNodoMini(contexto, x, y, estado, activo, aceptacion) {
+  const radio = aceptacion ? 27 : 24;
+
+  contexto.fillStyle = activo ? "#ffedd5" : aceptacion ? "#dcfce7" : "#ffffff";
+  contexto.strokeStyle = activo ? "#f97316" : aceptacion ? "#16a34a" : "#0f766e";
+  contexto.lineWidth = activo ? 4 : 2.5;
+  contexto.beginPath();
+  contexto.arc(x, y, radio, 0, Math.PI * 2);
+  contexto.fill();
+  contexto.stroke();
+
+  if (aceptacion) {
+    contexto.strokeStyle = "#16a34a";
+    contexto.lineWidth = 1.8;
+    contexto.beginPath();
+    contexto.arc(x, y, radio - 7, 0, Math.PI * 2);
+    contexto.stroke();
+  }
+
+  contexto.fillStyle = activo ? "#9a3412" : "#134e4a";
+  contexto.font = "900 12px Segoe UI";
+  contexto.textAlign = "center";
+  contexto.textBaseline = "middle";
+  contexto.fillText(estadoId(estado), x, y - 6);
+  contexto.font = "800 9px Segoe UI";
+  contexto.fillStyle = "#64748b";
+  contexto.fillText(formatoDinero(estado), x, y + 9);
+}
+
+function dibujarMefInternoDinero(canvas, precio, grupo) {
+  const contexto = canvas.getContext("2d");
+  ajustarCanvasMini(canvas, contexto);
+  const ancho = canvas.clientWidth;
+  const alto = canvas.clientHeight;
+  contexto.clearRect(0, 0, ancho, alto);
+
+  const camino = calcularCaminoCorto(precio);
+  contexto.fillStyle = "#0f172a";
+  contexto.font = "900 14px Segoe UI";
+  contexto.textAlign = "left";
+  contexto.fillText(`Objetivo: ${estadoId(precio)} (${formatoDinero(precio)})`, 16, 24);
+  contexto.fillStyle = "#64748b";
+  contexto.font = "800 11px Segoe UI";
+  contexto.fillText(grupo.map((producto) => producto.codigo).join(", "), 16, 42);
+
+  if (!camino) {
+    contexto.fillStyle = "#991b1b";
+    contexto.font = "900 13px Segoe UI";
+    contexto.fillText("No existe ruta con las monedas actuales.", 16, alto / 2);
+    return;
+  }
+
+  const estadosRuta = camino.estados;
+  const margen = 54;
+  const y = alto * 0.58;
+  const espacio = estadosRuta.length > 1 ? (ancho - margen * 2) / (estadosRuta.length - 1) : 0;
+  const puntos = estadosRuta.map((estado, indice) => ({
+    estado,
+    x: margen + indice * espacio,
+    y
+  }));
+
+  contexto.strokeStyle = "#0ea5e9";
+  contexto.lineWidth = 3;
+  contexto.lineCap = "round";
+  contexto.beginPath();
+  contexto.moveTo(puntos[0].x - 46, y);
+  contexto.lineTo(puntos[0].x - 27, y);
+  contexto.stroke();
+  contexto.lineCap = "butt";
+  dibujarPuntaFlecha(contexto, puntos[0].x - 22, y, 0, "#0ea5e9", 14);
+  contexto.fillStyle = "#0f766e";
+  contexto.font = "900 10px Segoe UI";
+  contexto.fillText("inicio", puntos[0].x - 52, y + 18);
+
+  for (let indice = 0; indice < puntos.length - 1; indice += 1) {
+    const origen = puntos[indice];
+    const destino = puntos[indice + 1];
+    const moneda = camino.monedasUsadas[indice];
+    const angulo = Math.atan2(destino.y - origen.y, destino.x - origen.x);
+    const inicioX = origen.x + Math.cos(angulo) * 29;
+    const finX = destino.x - Math.cos(angulo) * 32;
+    const medioX = (inicioX + finX) / 2;
+    const medioY = y - 26;
+
+    contexto.strokeStyle = "#0f766e";
+    contexto.lineWidth = 3;
+    contexto.beginPath();
+    contexto.moveTo(inicioX, y);
+    contexto.quadraticCurveTo(medioX, medioY, finX, y);
+    contexto.stroke();
+    dibujarPuntaFlecha(contexto, finX, y, Math.atan2(y - medioY, finX - medioX), "#0f766e", 15);
+
+    contexto.fillStyle = "rgba(255, 255, 255, 0.96)";
+    contexto.strokeStyle = "#0f766e";
+    contexto.lineWidth = 1.2;
+    const etiqueta = formatoMoneda(moneda);
+    const anchoTexto = contexto.measureText(etiqueta).width + 14;
+    contexto.beginPath();
+    contexto.roundRect(medioX - anchoTexto / 2, medioY - 15, anchoTexto, 22, 8);
+    contexto.fill();
+    contexto.stroke();
+    contexto.fillStyle = "#334155";
+    contexto.font = "900 11px Segoe UI";
+    contexto.textAlign = "center";
+    contexto.fillText(etiqueta, medioX, medioY);
+  }
+
+  puntos.forEach((punto, indice) => {
+    const aceptacion = indice === puntos.length - 1;
+    const activo = saldo >= punto.estado && punto.estado > 0;
+    dibujarNodoMini(contexto, punto.x, punto.y, punto.estado, activo, aceptacion);
+  });
+
+  contexto.textAlign = "left";
+  contexto.fillStyle = "#475569";
+  contexto.font = "800 11px Segoe UI";
+  contexto.fillText("Doble circulo = aceptacion de esta MEF interna.", 16, alto - 18);
+}
+
+function renderMefsInternosDinero() {
+  if (!mefsInternosDinero) return;
+
+  mefsInternosDinero.innerHTML = "";
+
+  productosPorPrecio().forEach(([precio, grupo], indice) => {
+    const tarjeta = document.createElement("article");
+    tarjeta.className = "money-submef-card";
+    tarjeta.innerHTML = `
+      <header>
+        <span>Sub-MEF ${indice + 1}</span>
+        <h3>${formatoDinero(precio)}</h3>
+        <p>${grupo.map((producto) => `${producto.codigo} ${producto.nombre}`).join(", ")}</p>
+      </header>
+      <canvas></canvas>
+    `;
+    mefsInternosDinero.appendChild(tarjeta);
+    dibujarMefInternoDinero(tarjeta.querySelector("canvas"), precio, grupo);
   });
 }
 
@@ -1434,6 +1585,7 @@ function insertarMoneda(moneda) {
   animarInsercionMoneda(moneda);
   renderDiagramaMaquina();
   renderDiagrama();
+  renderMefsInternosDinero();
 }
 
 function comprarProducto(producto) {
@@ -1462,6 +1614,7 @@ function comprarProducto(producto) {
   renderDiagramaMaquina();
   renderDiagrama();
   renderDiagramaRecojo();
+  renderMefsInternosDinero();
 }
 
 function recogerProducto() {
@@ -1484,6 +1637,7 @@ function recogerProducto() {
   mostrarToast(`Producto recogido: ${nombreProducto}.`);
   renderDiagramaMaquina();
   renderDiagramaRecojo();
+  renderMefsInternosDinero();
 
   reinicioRecojoTimer = setTimeout(() => {
     reiniciarCicloCompra("Listo. La maquina vuelve a q0 y espera dinero.");
@@ -1511,6 +1665,7 @@ function actualizarMaquina() {
   renderTablasFormalesMef();
   renderTablasAceptacion();
   renderCaminosCortos();
+  renderMefsInternosDinero();
   actualizarPantalla({ mensaje: "Maquina actualizada. Inserta dinero y luego elige producto." });
   renderDiagramaMaquina();
   renderDiagrama();
@@ -1528,12 +1683,14 @@ reiniciarMaquinaBtn.addEventListener("click", () => {
   renderDiagramaMaquina();
   renderDiagrama();
   renderDiagramaRecojo();
+  renderMefsInternosDinero();
 });
 
 window.addEventListener("resize", () => {
   renderDiagramaMaquina();
   renderDiagrama();
   renderDiagramaRecojo();
+  renderMefsInternosDinero();
 });
 
 actualizarMaquina();
