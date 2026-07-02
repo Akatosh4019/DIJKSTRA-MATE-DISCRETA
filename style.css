@@ -2705,6 +2705,78 @@ td:nth-child(2) {
   background-size: 24px 24px;
 }
 
+.mef-card-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding: 12px;
+  border-top: 1px solid #dbe3ee;
+  background: linear-gradient(135deg, #f8fafc, #ecfeff);
+}
+
+.mef-card-controls span {
+  margin-right: auto;
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.mef-card-controls button {
+  width: auto;
+  height: 38px;
+  margin: 0;
+  padding: 0 12px;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.34), transparent 1.8rem),
+    linear-gradient(135deg, #0f766e, #f97316);
+  font-size: 13px;
+}
+
+.mef-card-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+  filter: grayscale(0.35);
+}
+
+.mef-money-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.mef-balance-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 7px 11px;
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  border-radius: 999px;
+  color: #1e3a8a;
+  background: rgba(239, 246, 255, 0.92);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.mef-money-buttons .coin-button.compact {
+  min-width: 66px;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.34), transparent 1.8rem),
+    linear-gradient(135deg, #2563eb, #7c3aed);
+}
+
+.pickup-mef-controls {
+  background: linear-gradient(135deg, #fff7ed, #f0fdfa);
+}
+
+.main-mef-controls {
+  background: linear-gradient(135deg, #f8fafc, #ecfeff);
+}
+
 .mef-explain-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2990,6 +3062,52 @@ td:nth-child(2) {
   color: #9a3412;
 }
 
+#tablaTransiciones .current-row th,
+#tablaTransiciones .current-row td,
+.formal-mef-card .current-row th,
+.formal-mef-card .current-row td,
+.acceptance-card .current-row th,
+.acceptance-card .current-row td,
+.submef-table-wrap .current-row th,
+.submef-table-wrap .current-row td {
+  background: #ffedd5;
+  box-shadow: inset 0 0 0 2px #f97316;
+}
+
+#tablaTransiciones .current-row th:first-child,
+.formal-mef-card .current-row th:first-child,
+.acceptance-card .current-row th:first-of-type {
+  color: #9a3412;
+}
+
+#tablaTransiciones .current-row th:first-child::after,
+.formal-mef-card .current-row th:first-child::after,
+.acceptance-card .current-row th:first-of-type::after {
+  content: "Estas aqui";
+  display: block;
+  width: fit-content;
+  margin: 6px auto 0;
+  padding: 4px 7px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #f97316;
+  font-size: 10px;
+  font-weight: 950;
+}
+
+.submef-table-wrap .current-row th:first-of-type::after {
+  content: "Estas aqui";
+  display: block;
+  width: fit-content;
+  margin: 6px auto 0;
+  padding: 4px 7px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #f97316;
+  font-size: 10px;
+  font-weight: 950;
+}
+
 .formal-mef-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -3188,9 +3306,19 @@ td:nth-child(2) {
   font-weight: 950;
 }
 
+#tablaTransiciones .current-row th,
+#tablaTransiciones .current-row td,
+.formal-mef-card .current-row th,
+.formal-mef-card .current-row td,
+.acceptance-card .current-row th,
+.acceptance-card .current-row td {
+  background: #ffedd5;
+  box-shadow: inset 0 0 0 2px #f97316;
+}
+
 .money-submef-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 14px;
 }
 
@@ -3233,15 +3361,198 @@ td:nth-child(2) {
   text-align: left;
 }
 
+.submef-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid #fed7aa;
+  background: #fff7ed;
+}
+
+.submef-toolbar span {
+  margin-right: auto;
+  color: #9a3412;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.submef-toolbar button {
+  width: auto;
+  height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #f97316, #0f766e);
+  font-size: 13px;
+}
+
+.submef-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid #fed7aa;
+  color: #334155;
+  background: #ffffff;
+}
+
+.submef-legend strong {
+  margin-right: 4px;
+  color: #9a3412;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.submef-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.submef-legend-item i {
+  display: inline-block;
+  width: 22px;
+  height: 5px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+.submef-money-controls {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-top: 1px solid #fed7aa;
+  background: #fff7ed;
+}
+
+.submef-money-controls strong {
+  color: #9a3412;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.submef-current-balance {
+  width: fit-content;
+  padding: 7px 10px;
+  border: 1px solid #fed7aa;
+  border-radius: 999px;
+  color: #9a3412;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.submef-money-controls div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.submef-money-controls button {
+  width: auto;
+  height: 34px;
+  margin: 0;
+  padding: 0 10px;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.38), transparent 1.8rem),
+    linear-gradient(135deg, #0f766e, #f97316);
+  font-size: 12px;
+}
+
+.submef-canvas-wrap {
+  overflow: auto;
+  border-top: 1px solid #fed7aa;
+  background: #ffffff;
+}
+
 .money-submef-card canvas {
   display: block;
-  width: 100%;
-  height: 250px;
+  width: 1900px;
+  height: 900px;
+  max-width: none;
   background:
     linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
     linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px),
     #ffffff;
   background-size: 22px 22px;
+}
+
+.submef-table-wrap {
+  max-height: 300px;
+  overflow: auto;
+  padding: 12px;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.submef-table-wrap table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 2px solid #fed7aa;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.submef-table-wrap th,
+.submef-table-wrap td {
+  min-width: 116px;
+  padding: 9px 10px;
+  border-top: 1px solid #fed7aa;
+  border-right: 1px solid #fed7aa;
+  color: #334155;
+  font-size: 13px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.submef-table-wrap th {
+  color: #9a3412;
+  background: #ffedd5;
+}
+
+.submef-table-wrap td small,
+.submef-table-wrap th small {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 10px;
+}
+
+.submef-table-wrap .marker-head,
+.submef-table-wrap .state-marker {
+  width: 36px;
+  min-width: 36px;
+  background: #ffffff;
+}
+
+.submef-table-wrap .state-marker {
+  color: #0f766e;
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.submef-table-wrap .accept-cell {
+  color: #9a3412;
+  background: #fed7aa;
+  box-shadow: inset 0 0 0 2px #f97316;
+  font-weight: 950;
 }
 
 @keyframes floatIn {
@@ -3585,6 +3896,11 @@ td:nth-child(2) {
 
   .machine-slots {
     grid-template-columns: 1fr;
+  }
+
+  .submef-money-controls {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
   }
 
   .product-drop {

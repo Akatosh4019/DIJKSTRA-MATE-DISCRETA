@@ -116,6 +116,13 @@
             <h3>Control de la maquina expendedora</h3>
           </div>
           <canvas id="diagramaMaquina"></canvas>
+          <div class="mef-card-controls main-mef-controls">
+            <span>Prueba del MEF 1</span>
+            <button type="button" id="demoSaldoMinimo">Ingresar monto minimo</button>
+            <button type="button" id="demoSaldoMaximo">Ingresar monto maximo</button>
+            <button type="button" id="demoElegirProducto">Elegir producto</button>
+            <button type="button" id="demoRecogerProducto">Recoger producto</button>
+          </div>
         </article>
         <article class="mef-card">
           <div class="mef-card-header">
@@ -123,6 +130,12 @@
             <h3>Control de dinero ingresado</h3>
           </div>
           <canvas id="diagramaEstados"></canvas>
+          <div class="mef-card-controls money-mef-controls">
+            <span>Entradas del MEF 2</span>
+            <strong id="mefDineroSaldo" class="mef-balance-pill">Saldo ingresado: S/0.00 | q0</strong>
+            <div id="mefDineroBotones" class="mef-money-buttons"></div>
+            <button type="button" id="mefProductoAleatorio">Seleccionar producto aleatorio</button>
+          </div>
         </article>
         <article class="mef-card">
           <div class="mef-card-header">
@@ -130,6 +143,10 @@
             <h3>Control de retiro del producto</h3>
           </div>
           <canvas id="diagramaRecojo"></canvas>
+          <div class="mef-card-controls pickup-mef-controls">
+            <span>Entrada del MEF 3</span>
+            <button type="button" id="mefRecogerProducto" disabled>Retirar producto</button>
+          </div>
         </article>
       </div>
     </section>

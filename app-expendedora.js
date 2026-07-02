@@ -2,6 +2,14 @@ const monedasInput = document.getElementById("monedas");
 const actualizarMaquinaBtn = document.getElementById("actualizarMaquina");
 const reiniciarMaquinaBtn = document.getElementById("reiniciarMaquina");
 const botonesMonedas = document.getElementById("botonesMonedas");
+const demoSaldoMinimoBtn = document.getElementById("demoSaldoMinimo");
+const demoSaldoMaximoBtn = document.getElementById("demoSaldoMaximo");
+const demoElegirProductoBtn = document.getElementById("demoElegirProducto");
+const demoRecogerProductoBtn = document.getElementById("demoRecogerProducto");
+const mefDineroBotones = document.getElementById("mefDineroBotones");
+const mefDineroSaldo = document.getElementById("mefDineroSaldo");
+const mefProductoAleatorioBtn = document.getElementById("mefProductoAleatorio");
+const mefRecogerProductoBtn = document.getElementById("mefRecogerProducto");
 const estadoActual = document.getElementById("estadoActual");
 const conjuntoEstados = document.getElementById("conjuntoEstados");
 const alfabetoEntrada = document.getElementById("alfabetoEntrada");
@@ -57,6 +65,10 @@ const coloresMonedas = ["#2563eb", "#7c3aed", "#16a34a", "#db2777", "#0891b2", "
 
 function maxPrecio() {
   return Math.max(...productos.map((producto) => producto.precio));
+}
+
+function minPrecio() {
+  return Math.min(...productos.map((producto) => producto.precio));
 }
 
 function estadoDesdeSaldo(valor) {
@@ -131,6 +143,10 @@ function limpiarSalidaVisual() {
     recogerProductoBtn.disabled = true;
     recogerProductoBtn.textContent = "Recoger producto";
   }
+  if (mefRecogerProductoBtn) {
+    mefRecogerProductoBtn.disabled = true;
+    mefRecogerProductoBtn.textContent = "Retirar producto";
+  }
 
   if (productoVisual) {
     productoVisual.classList.remove("product-delivered");
@@ -153,6 +169,9 @@ function reiniciarCicloCompra(mensaje = "La maquina vuelve a q0 y espera dinero.
   renderDiagramaMaquina();
   renderDiagrama();
   renderDiagramaRecojo();
+  renderTablaTransiciones();
+  renderTablasFormalesMef();
+  renderTablasAceptacion();
   renderMefsInternosDinero();
 }
 
@@ -283,6 +302,9 @@ function actualizarElementosFormales() {
 
 function renderBotonesMonedas() {
   botonesMonedas.innerHTML = "";
+  if (mefDineroBotones) {
+    mefDineroBotones.innerHTML = "";
+  }
 
   monedas.forEach((moneda) => {
     const boton = document.createElement("button");
@@ -291,6 +313,15 @@ function renderBotonesMonedas() {
     boton.textContent = `+${formatoMoneda(moneda)}`;
     boton.addEventListener("click", () => insertarMoneda(moneda));
     botonesMonedas.appendChild(boton);
+
+    if (mefDineroBotones) {
+      const botonMef = document.createElement("button");
+      botonMef.type = "button";
+      botonMef.className = "coin-button compact";
+      botonMef.textContent = `+${formatoMoneda(moneda)}`;
+      botonMef.addEventListener("click", () => insertarMoneda(moneda));
+      mefDineroBotones.appendChild(botonMef);
+    }
   });
 }
 
@@ -329,6 +360,7 @@ function renderTablaTransiciones() {
 
   estadosDinero().forEach((estado) => {
     const fila = document.createElement("tr");
+    fila.className = estado === estadoDesdeSaldo(saldo) ? "current-row" : "";
     const celdas = monedas.map((moneda) => {
       const transicion = calcularTransicion(estado, moneda);
       const habilitados = productosHabilitados(transicion.nuevoEstado);
@@ -363,24 +395,41 @@ function renderTablaFormal(tabla, columnas, filas) {
 }
 
 function renderTablasFormalesMef() {
+  const estadoPrincipalActual = estadoRecojo === "aceptado"
+    ? "qM5"
+    : estadoRecojo === "esperando"
+      ? "qM4"
+      : saldo > 0
+        ? "qM1"
+        : "qM0";
+  const estadoRecojoActual = estadoRecojo === "aceptado"
+    ? "qR2"
+    : estadoRecojo === "esperando"
+      ? "qR1"
+      : "qR0";
   const filasPrincipal = [
     {
+      clase: estadoPrincipalActual === "qM0" ? "current-row" : "",
       celdas: ["&rarr; qM0", "insertar moneda", "qM1", "Activa la MEF 2: control de dinero"]
     },
     {
+      clase: estadoPrincipalActual === "qM1" ? "current-row" : "",
       celdas: ["qM1", "saldo suficiente", "qM2", "La MEF 2 acepta y habilita productos"]
     },
     {
+      clase: estadoPrincipalActual === "qM2" ? "current-row" : "",
       celdas: ["qM2", "seleccionar producto", "qM3", "Se prepara la entrega del producto"]
     },
     {
+      clase: estadoPrincipalActual === "qM3" ? "current-row" : "",
       celdas: ["qM3", "producto y vuelto entregados", "qM4", "Activa la MEF 3: control de recojo"]
     },
     {
+      clase: estadoPrincipalActual === "qM4" ? "current-row" : "",
       celdas: ["qM4", "producto recogido", "qM5", "La MEF 3 acepta el recojo"]
     },
     {
-      clase: "accept-row",
+      clase: `accept-row ${estadoPrincipalActual === "qM5" ? "current-row" : ""}`.trim(),
       celdas: ["&#9678; qM5", "reinicio automatico", "qM0", "Reinicio de maquina"]
     }
   ];
@@ -397,7 +446,7 @@ function renderTablasFormalesMef() {
       const destino = calcularTransicion(estado, moneda).nuevoEstado;
       const habilitados = productosHabilitados(destino);
       filasDinero.push({
-        clase: habilitados ? "accept-row" : "",
+        clase: `${habilitados ? "accept-row" : ""} ${estado === estadoDesdeSaldo(saldo) ? "current-row" : ""}`.trim(),
         celdas: [
           estado === 0 ? `&rarr; ${estadoId(estado)}` : estadoId(estado),
           formatoMoneda(moneda),
@@ -416,13 +465,15 @@ function renderTablasFormalesMef() {
 
   const filasRecojo = [
     {
+      clase: estadoRecojoActual === "qR0" ? "current-row" : "",
       celdas: ["&rarr; qR0", "producto cae en bandeja", "qR1", "Esperar que el usuario recoja"]
     },
     {
-      clase: "accept-row",
+      clase: `accept-row ${estadoRecojoActual === "qR1" ? "current-row" : ""}`.trim(),
       celdas: ["qR1", "usuario recoge producto", "&#9678; qR2", "Recojo aceptado"]
     },
     {
+      clase: estadoRecojoActual === "qR2" ? "current-row" : "",
       celdas: ["&#9678; qR2", "retornar al principal", "qR0", "Notifica a MEF 1 para reiniciar"]
     }
   ];
@@ -470,7 +521,7 @@ function renderTablasAceptacion() {
       }).join("");
 
       return `
-        <tr class="${aceptado ? "accept-row" : ""}">
+        <tr class="${`${aceptado ? "accept-row" : ""} ${estado === estadoDesdeSaldo(saldo) ? "current-row" : ""}`.trim()}">
           <td class="state-marker">${marcador}</td>
           <th>${estadoId(estado)}<small>${formatoDinero(estado)}${esMeta ? " meta" : ""}</small></th>
           ${celdas}
@@ -630,80 +681,108 @@ function dibujarMefInternoDinero(canvas, precio, grupo) {
   const alto = canvas.clientHeight;
   contexto.clearRect(0, 0, ancho, alto);
 
-  const camino = calcularCaminoCorto(precio);
   contexto.fillStyle = "#0f172a";
   contexto.font = "900 14px Segoe UI";
   contexto.textAlign = "left";
   contexto.fillText(`Objetivo: ${estadoId(precio)} (${formatoDinero(precio)})`, 16, 24);
   contexto.fillStyle = "#64748b";
   contexto.font = "800 11px Segoe UI";
-  contexto.fillText(grupo.map((producto) => producto.codigo).join(", "), 16, 42);
+  contexto.fillText(`${grupo.map((producto) => producto.codigo).join(", ")} | Grafo por niveles: cada flecha muestra una moneda de entrada.`, 16, 42);
 
-  if (!camino) {
-    contexto.fillStyle = "#991b1b";
-    contexto.font = "900 13px Segoe UI";
-    contexto.fillText("No existe ruta con las monedas actuales.", 16, alto / 2);
-    return;
+  const niveles = new Map([[0, 0]]);
+  const cola = [0];
+
+  while (cola.length > 0) {
+    const estado = cola.shift();
+    const nivel = niveles.get(estado);
+    monedas.forEach((moneda) => {
+      const destino = Math.min(estado + moneda, precio);
+      if (!niveles.has(destino)) {
+        niveles.set(destino, nivel + 1);
+        if (destino < precio) cola.push(destino);
+      }
+    });
   }
 
-  const estadosRuta = camino.estados;
-  const margen = 54;
-  const y = alto * 0.58;
-  const espacio = estadosRuta.length > 1 ? (ancho - margen * 2) / (estadosRuta.length - 1) : 0;
-  const puntos = estadosRuta.map((estado, indice) => ({
-    estado,
-    x: margen + indice * espacio,
-    y
-  }));
+  const estados = Array.from(niveles.keys()).sort((a, b) => a - b);
+  const maxNivel = Math.max(...Array.from(niveles.values()));
+  const columnas = Array.from({ length: maxNivel + 1 }, () => []);
+  estados.forEach((estado) => {
+    columnas[niveles.get(estado)].push(estado);
+  });
+  columnas.forEach((columna) => columna.sort((a, b) => a - b));
+
+  const margenX = 86;
+  const margenY = 92;
+  const separacionX = 250;
+  const separacionY = 76;
+  const puntos = new Map();
+
+  columnas.forEach((columna, nivel) => {
+    const alturaColumna = (columna.length - 1) * separacionY;
+    const inicioY = margenY + Math.max(0, (alto - margenY - 80 - alturaColumna) / 2);
+    columna.forEach((estado, fila) => {
+      puntos.set(estado, {
+        estado,
+        x: margenX + nivel * separacionX,
+        y: inicioY + fila * separacionY
+      });
+    });
+  });
 
   contexto.strokeStyle = "#0ea5e9";
   contexto.lineWidth = 3;
   contexto.lineCap = "round";
+  const inicio = puntos.get(0);
   contexto.beginPath();
-  contexto.moveTo(puntos[0].x - 46, y);
-  contexto.lineTo(puntos[0].x - 27, y);
+  contexto.moveTo(inicio.x - 52, inicio.y);
+  contexto.lineTo(inicio.x - 28, inicio.y);
   contexto.stroke();
   contexto.lineCap = "butt";
-  dibujarPuntaFlecha(contexto, puntos[0].x - 22, y, 0, "#0ea5e9", 14);
+  dibujarPuntaFlecha(contexto, inicio.x - 22, inicio.y, 0, "#0ea5e9", 14);
   contexto.fillStyle = "#0f766e";
   contexto.font = "900 10px Segoe UI";
-  contexto.fillText("inicio", puntos[0].x - 52, y + 18);
+  contexto.fillText("inicio", inicio.x - 58, inicio.y + 20);
 
-  for (let indice = 0; indice < puntos.length - 1; indice += 1) {
-    const origen = puntos[indice];
-    const destino = puntos[indice + 1];
-    const moneda = camino.monedasUsadas[indice];
-    const angulo = Math.atan2(destino.y - origen.y, destino.x - origen.x);
-    const inicioX = origen.x + Math.cos(angulo) * 29;
-    const finX = destino.x - Math.cos(angulo) * 32;
-    const medioX = (inicioX + finX) / 2;
-    const medioY = y - 26;
+  estados.forEach((estado) => {
+    monedas.forEach((moneda, indiceMoneda) => {
+      const destino = Math.min(estado + moneda, precio);
+      if (destino === estado) return;
+      const origen = puntos.get(estado);
+      const puntoDestino = puntos.get(destino);
+      if (!origen || !puntoDestino) return;
 
-    contexto.strokeStyle = "#0f766e";
-    contexto.lineWidth = 3;
-    contexto.beginPath();
-    contexto.moveTo(inicioX, y);
-    contexto.quadraticCurveTo(medioX, medioY, finX, y);
-    contexto.stroke();
-    dibujarPuntaFlecha(contexto, finX, y, Math.atan2(y - medioY, finX - medioX), "#0f766e", 15);
+      const estilo = estiloMoneda(moneda);
+      const dx = puntoDestino.x - origen.x;
+      const dy = puntoDestino.y - origen.y;
+      const distancia = Math.hypot(dx, dy) || 1;
+      const nx = dx / distancia;
+      const ny = dy / distancia;
+      const inicioX = origen.x + nx * 32;
+      const inicioY = origen.y + ny * 32;
+      const finX = puntoDestino.x - nx * 34;
+      const finY = puntoDestino.y - ny * 34;
+      const normalX = -ny;
+      const normalY = nx;
+      const curva = ((indiceMoneda % 3) - 1) * 16;
+      const medioX = (inicioX + finX) / 2 + normalX * curva;
+      const medioY = (inicioY + finY) / 2 + normalY * curva;
+      const tramoAlcanzado = saldo >= destino;
+      const llegaAceptacion = destino >= precio;
+      const color = tramoAlcanzado ? "#f97316" : llegaAceptacion ? "#16a34a" : estilo.color;
 
-    contexto.fillStyle = "rgba(255, 255, 255, 0.96)";
-    contexto.strokeStyle = "#0f766e";
-    contexto.lineWidth = 1.2;
-    const etiqueta = formatoMoneda(moneda);
-    const anchoTexto = contexto.measureText(etiqueta).width + 14;
-    contexto.beginPath();
-    contexto.roundRect(medioX - anchoTexto / 2, medioY - 15, anchoTexto, 22, 8);
-    contexto.fill();
-    contexto.stroke();
-    contexto.fillStyle = "#334155";
-    contexto.font = "900 11px Segoe UI";
-    contexto.textAlign = "center";
-    contexto.fillText(etiqueta, medioX, medioY);
-  }
+      contexto.strokeStyle = color;
+      contexto.lineWidth = tramoAlcanzado ? 3.2 : 2;
+      contexto.beginPath();
+      contexto.moveTo(inicioX, inicioY);
+      contexto.quadraticCurveTo(medioX, medioY, finX, finY);
+      contexto.stroke();
+      dibujarPuntaFlecha(contexto, finX, finY, Math.atan2(finY - medioY, finX - medioX), color, 11);
+    });
+  });
 
-  puntos.forEach((punto, indice) => {
-    const aceptacion = indice === puntos.length - 1;
+  puntos.forEach((punto) => {
+    const aceptacion = punto.estado === precio;
     const activo = saldo >= punto.estado && punto.estado > 0;
     dibujarNodoMini(contexto, punto.x, punto.y, punto.estado, activo, aceptacion);
   });
@@ -711,7 +790,88 @@ function dibujarMefInternoDinero(canvas, precio, grupo) {
   contexto.textAlign = "left";
   contexto.fillStyle = "#475569";
   contexto.font = "800 11px Segoe UI";
-  contexto.fillText("Doble circulo = aceptacion de esta MEF interna.", 16, alto - 18);
+  contexto.fillText("Color de flecha = moneda. Naranja = transicion ya alcanzada con el saldo actual.", 16, alto - 18);
+}
+
+function crearTablaSubMefDinero(precio) {
+  const estados = Array.from(new Set([0, ...monedas.map((moneda) => Math.min(moneda, precio)), ...monedas.map((moneda) => Math.max(0, precio - moneda)), precio]))
+    .filter((estado) => estado >= 0 && estado <= precio)
+    .sort((a, b) => a - b);
+
+  const filas = estados.map((estado) => {
+    const celdas = monedas.map((moneda) => {
+      const destino = Math.min(estado + moneda, precio);
+      const acepta = destino >= precio;
+      return `<td class="${acepta ? "accept-cell" : ""}">${estadoId(destino)}<small>${formatoDinero(destino)}</small></td>`;
+    }).join("");
+    const marcador = `${estado === 0 ? "&rarr;" : ""}${estado === precio ? "&#9678;" : ""}`;
+    return `
+      <tr class="${estado === estadoDesdeSaldo(saldo) ? "current-row" : ""}">
+        <td class="state-marker">${marcador}</td>
+        <th>${estadoId(estado)}<small>${formatoDinero(estado)}</small></th>
+        ${celdas}
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <div class="submef-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="marker-head"></th>
+            <th>Estado</th>
+            <th colspan="${monedas.length}">Entradas disponibles</th>
+          </tr>
+          <tr>
+            <th class="marker-head"></th>
+            <th></th>
+            ${monedas.map((moneda) => `<th>${formatoMoneda(moneda)}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function crearLeyendaSubMef() {
+  const monedasLeyenda = monedas.map((moneda) => {
+    const estilo = estiloMoneda(moneda);
+    return `
+      <span class="submef-legend-item">
+        <i style="background:${estilo.color}"></i>
+        ${formatoMoneda(moneda)}
+      </span>
+    `;
+  }).join("");
+
+  return `
+    <div class="submef-legend" aria-label="Leyenda de colores del sub-MEF">
+      <strong>Colores de flechas</strong>
+      ${monedasLeyenda}
+      <span class="submef-legend-item">
+        <i style="background:#f97316"></i>
+        tramo recorrido
+      </span>
+      <span class="submef-legend-item">
+        <i style="background:#16a34a"></i>
+        llega a aceptacion
+      </span>
+    </div>
+  `;
+}
+
+function crearControlesSubMef() {
+  return `
+    <div class="submef-money-controls">
+      <strong>Ingresar dinero aqui</strong>
+      <span class="submef-current-balance">Saldo actual: ${formatoDinero(saldo)} | ${estadoId(saldo)}</span>
+      <div>
+        ${monedas.map((moneda) => `<button type="button" data-coin="${moneda}">+${formatoMoneda(moneda)}</button>`).join("")}
+      </div>
+    </div>
+  `;
 }
 
 function renderMefsInternosDinero() {
@@ -728,10 +888,39 @@ function renderMefsInternosDinero() {
         <h3>${formatoDinero(precio)}</h3>
         <p>${grupo.map((producto) => `${producto.codigo} ${producto.nombre}`).join(", ")}</p>
       </header>
-      <canvas></canvas>
+      <div class="submef-toolbar">
+        <span>Zoom del grafo</span>
+        <button type="button" data-zoom="out">-</button>
+        <button type="button" data-zoom="reset">100%</button>
+        <button type="button" data-zoom="in">+</button>
+      </div>
+      ${crearLeyendaSubMef()}
+      ${crearControlesSubMef()}
+      <div class="submef-canvas-wrap">
+        <canvas data-zoom="1"></canvas>
+      </div>
+      ${crearTablaSubMefDinero(precio)}
     `;
     mefsInternosDinero.appendChild(tarjeta);
-    dibujarMefInternoDinero(tarjeta.querySelector("canvas"), precio, grupo);
+    const canvas = tarjeta.querySelector("canvas");
+    const redibujar = () => dibujarMefInternoDinero(canvas, precio, grupo);
+    redibujar();
+    tarjeta.querySelectorAll("button[data-zoom]").forEach((boton) => {
+      boton.addEventListener("click", () => {
+        const accion = boton.dataset.zoom;
+        const zoomActual = Number(canvas.dataset.zoom || "1");
+        const zoomNuevo = accion === "reset"
+          ? 1
+          : Math.min(1.8, Math.max(0.65, zoomActual + (accion === "in" ? 0.15 : -0.15)));
+        canvas.dataset.zoom = zoomNuevo.toFixed(2);
+        canvas.style.width = `${1900 * zoomNuevo}px`;
+        canvas.style.height = `${900 * zoomNuevo}px`;
+        redibujar();
+      });
+    });
+    tarjeta.querySelectorAll("button[data-coin]").forEach((boton) => {
+      boton.addEventListener("click", () => insertarMoneda(Number(boton.dataset.coin)));
+    });
   });
 }
 
@@ -1553,6 +1742,9 @@ function actualizarPantalla({ moneda = "-", producto = null, vuelto = 0, mensaje
   const estadoVisible = estadoDesdeSaldo(saldo);
   saldoPantalla.textContent = (saldo / 100).toFixed(2);
   estadoActual.textContent = `Estado ${estadoId(estadoVisible)} | Saldo real ${formatoDinero(saldo)}`;
+  if (mefDineroSaldo) {
+    mefDineroSaldo.textContent = `Saldo ingresado: ${formatoDinero(saldo)} | ${estadoId(estadoVisible)}`;
+  }
   const etiquetaActual = productoVisual.querySelector("span");
   if (etiquetaActual && !producto) {
     etiquetaActual.textContent = "Elige un producto";
@@ -1583,8 +1775,12 @@ function insertarMoneda(moneda) {
 
   actualizarPantalla({ moneda, mensaje });
   animarInsercionMoneda(moneda);
+  renderTablaTransiciones();
+  renderTablasFormalesMef();
+  renderTablasAceptacion();
   renderDiagramaMaquina();
   renderDiagrama();
+  renderDiagramaRecojo();
   renderMefsInternosDinero();
 }
 
@@ -1603,6 +1799,10 @@ function comprarProducto(producto) {
     recogerProductoBtn.disabled = false;
     recogerProductoBtn.textContent = `Recoger ${producto.nombre}`;
   }
+  if (mefRecogerProductoBtn) {
+    mefRecogerProductoBtn.disabled = false;
+    mefRecogerProductoBtn.textContent = `Retirar ${producto.nombre}`;
+  }
 
   actualizarPantalla({
     producto,
@@ -1611,10 +1811,75 @@ function comprarProducto(producto) {
   });
   animarEntrega(producto, vuelto);
   mostrarToast(`Salio ${producto.nombre}. Recogelo para finalizar.`);
+  renderTablasFormalesMef();
   renderDiagramaMaquina();
   renderDiagrama();
   renderDiagramaRecojo();
   renderMefsInternosDinero();
+}
+
+function demoIngresarSaldoMaximo() {
+  if (estadoRecojo === "esperando") {
+    mostrarToast("Primero recoge el producto pendiente.");
+    return;
+  }
+
+  saldo = maxPrecio();
+  transicionActiva = { estado: 0, moneda: maxPrecio() };
+  productoEntregado = null;
+  limpiarSalidaVisual();
+  actualizarPantalla({
+    moneda: maxPrecio(),
+    mensaje: `Demostracion: se ingreso el monto maximo ${formatoDinero(maxPrecio())}. Todos los productos quedan disponibles.`
+  });
+  renderTablaTransiciones();
+  renderTablasFormalesMef();
+  renderTablasAceptacion();
+  renderDiagramaMaquina();
+  renderDiagrama();
+  renderMefsInternosDinero();
+  mostrarToast("Monto maximo ingresado para mostrar el flujo.");
+}
+
+function demoIngresarSaldoMinimo() {
+  if (estadoRecojo === "esperando") {
+    mostrarToast("Primero recoge el producto pendiente.");
+    return;
+  }
+
+  const monto = minPrecio();
+  const productosMinimos = productos
+    .filter((producto) => producto.precio === monto)
+    .map((producto) => producto.nombre)
+    .join(", ");
+
+  saldo = monto;
+  transicionActiva = { estado: 0, moneda: monto };
+  productoEntregado = null;
+  limpiarSalidaVisual();
+  actualizarPantalla({
+    moneda: monto,
+    mensaje: `Demostracion: se ingreso el monto minimo ${formatoDinero(monto)}. Se desbloquea: ${productosMinimos}.`
+  });
+  renderTablaTransiciones();
+  renderTablasFormalesMef();
+  renderTablasAceptacion();
+  renderDiagramaMaquina();
+  renderDiagrama();
+  renderMefsInternosDinero();
+  mostrarToast("Monto minimo ingresado para mostrar el primer estado de aceptacion.");
+}
+
+function seleccionarProductoAleatorio() {
+  const disponibles = productos.filter((item) => saldo >= item.precio);
+  const producto = disponibles[Math.floor(Math.random() * disponibles.length)];
+
+  if (!producto) {
+    mostrarToast("Primero ingresa dinero suficiente.");
+    return;
+  }
+
+  comprarProducto(producto);
 }
 
 function recogerProducto() {
@@ -1629,12 +1894,17 @@ function recogerProducto() {
     recogerProductoBtn.disabled = true;
     recogerProductoBtn.textContent = "Producto recogido";
   }
+  if (mefRecogerProductoBtn) {
+    mefRecogerProductoBtn.disabled = true;
+    mefRecogerProductoBtn.textContent = "Producto retirado";
+  }
 
   actualizarPantalla({
     producto: productoEntregado,
     mensaje: `Reinicio de maquina: recogiste ${nombreProducto}. Volviendo a q0...`
   });
   mostrarToast(`Producto recogido: ${nombreProducto}.`);
+  renderTablasFormalesMef();
   renderDiagramaMaquina();
   renderDiagramaRecojo();
   renderMefsInternosDinero();
@@ -1674,12 +1944,33 @@ function actualizarMaquina() {
 
 actualizarMaquinaBtn.addEventListener("click", actualizarMaquina);
 recogerProductoBtn.addEventListener("click", recogerProducto);
+if (mefProductoAleatorioBtn) {
+  mefProductoAleatorioBtn.addEventListener("click", seleccionarProductoAleatorio);
+}
+if (mefRecogerProductoBtn) {
+  mefRecogerProductoBtn.addEventListener("click", recogerProducto);
+}
+if (demoSaldoMinimoBtn) {
+  demoSaldoMinimoBtn.addEventListener("click", demoIngresarSaldoMinimo);
+}
+if (demoSaldoMaximoBtn) {
+  demoSaldoMaximoBtn.addEventListener("click", demoIngresarSaldoMaximo);
+}
+if (demoElegirProductoBtn) {
+  demoElegirProductoBtn.addEventListener("click", seleccionarProductoAleatorio);
+}
+if (demoRecogerProductoBtn) {
+  demoRecogerProductoBtn.addEventListener("click", recogerProducto);
+}
 reiniciarMaquinaBtn.addEventListener("click", () => {
   saldo = 0;
   productoEntregado = null;
   transicionActiva = null;
   limpiarSalidaVisual();
   actualizarPantalla({ mensaje: "Compra reiniciada. La maquina vuelve a q0." });
+  renderTablaTransiciones();
+  renderTablasFormalesMef();
+  renderTablasAceptacion();
   renderDiagramaMaquina();
   renderDiagrama();
   renderDiagramaRecojo();
