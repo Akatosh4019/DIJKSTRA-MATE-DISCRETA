@@ -153,7 +153,7 @@
         </div>
         <div>
           <strong>MEF 3 confirma el recojo</strong>
-          <p>Cuando el producto cae, la maquina espera que el usuario lo recoja. Al recogerlo llega al estado de aceptacion y vuelve a esperar dinero.</p>
+          <p>Cuando el producto cae, la maquina espera que el usuario lo recoja. Al recogerlo pasa al reinicio de maquina y vuelve a esperar dinero.</p>
         </div>
       </div>
     </section>
@@ -185,10 +185,40 @@
     <section class="transition-section">
       <header>
         <div>
-          <span>Tablas por producto</span>
+          <span>Tablas formales</span>
+          <h2>Funciones de transicion de las MEF</h2>
+        </div>
+        <p>Cada tabla resume estado actual, entrada recibida, nuevo estado y salida generada.</p>
+      </header>
+      <div class="formal-mef-grid">
+        <article class="formal-mef-card">
+          <h3>MEF 1 - Control principal</h3>
+          <div class="formal-table-wrap">
+            <table id="tablaMefPrincipal"></table>
+          </div>
+        </article>
+        <article class="formal-mef-card">
+          <h3>MEF 2 - Control de dinero general</h3>
+          <div class="formal-table-wrap">
+            <table id="tablaMefDinero"></table>
+          </div>
+        </article>
+        <article class="formal-mef-card">
+          <h3>MEF 3 - Control de recojo</h3>
+          <div class="formal-table-wrap">
+            <table id="tablaMefRecojo"></table>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="transition-section">
+      <header>
+        <div>
+          <span>Tablas por precio</span>
           <h2>Estados de aceptacion</h2>
         </div>
-        <p>Cada producto tiene su propia tabla: la flecha marca q0 y el simbolo ◎ marca los estados donde ese producto queda habilitado.</p>
+        <p>Cada precio tiene su propia tabla: la flecha marca q0 y el simbolo &#9678; marca los estados donde ese precio queda habilitado.</p>
       </header>
       <div class="acceptance-grid" id="tablasAceptacion"></div>
     </section>

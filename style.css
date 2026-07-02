@@ -2990,6 +2990,73 @@ td:nth-child(2) {
   color: #9a3412;
 }
 
+.formal-mef-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.formal-mef-card {
+  min-width: 0;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+}
+
+.formal-mef-card h3 {
+  margin: 0;
+  padding: 14px;
+  color: #0f172a;
+  background:
+    radial-gradient(circle at top right, rgba(14, 165, 233, 0.16), transparent 10rem),
+    linear-gradient(135deg, #f8fafc, #eef6ff);
+  font-size: 20px;
+}
+
+.formal-table-wrap {
+  max-height: 420px;
+  overflow: auto;
+}
+
+.formal-mef-card table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.formal-mef-card th,
+.formal-mef-card td {
+  padding: 11px;
+  border-top: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 13px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.formal-mef-card thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: #0369a1;
+  background: #e0f2fe;
+  font-weight: 950;
+}
+
+.formal-mef-card tbody th {
+  color: #134e4a;
+  background: #f8fafc;
+  white-space: nowrap;
+}
+
+.formal-mef-card .accept-row th,
+.formal-mef-card .accept-row td {
+  background: #fef3c7;
+}
+
 .acceptance-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
